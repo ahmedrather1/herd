@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (locked repo layout + Python tooling D41–D42; A-1 scaffolding started)
+- Last updated: 2026-09-02 (A-1 landed; A-2 paper-lock implemented, scoped D44)
 
 ---
 
@@ -61,6 +61,7 @@ implicit in code or chat.
 |---|----------|-----------|
 | D24 | **v1 interface = minimal local web UI.** Type request → see restatement + proposed orders + current-vs-target → click confirm. | Matches the eventual frontend goal; usable on its own. |
 | D25 | **Hard paper-lock in v1.** v1 targets Alpaca **paper endpoints only**; live trading is physically unreachable until a deliberately-built "live mode" with its own guardrails is added later. | "Real money eventually" must be impossible-by-accident now. |
+| D44 | **Paper-lock is scoped to the trading endpoint** (A-2). The pinned constant + `verify_paper_only` guard (`rebalancer/paperlock.py`) enforce the single paper **trading** host (`paper-api.alpaca.markets`) and refuse the live host (`api.alpaca.markets`). The read-only **market-data** host (`data.alpaca.markets`, prices/quotes) is a separate concern handled in A-4 — it cannot place orders, so it does not weaken the lock; A-4 still routes it through pinned constants (no env/config URL). There is no paper/live toggle. | Precisely defines the invariant so A-4 doesn't treat read-only data as a lock violation, nor open a config path to a live endpoint. |
 
 ## 6. Tech stack (locked 2026-09-02)
 

@@ -12,12 +12,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .config import get_settings
+from .paperlock import assert_paper_lock
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Validate config at startup so a misconfigured app fails immediately and
-    # loudly rather than on the first Alpaca/Anthropic call (A-1).
+    # Fail fast at startup on two invariants:
+    #  - paper-lock (A-2/D25): the pinned Alpaca endpoint must be paper, never live;
+    #  - config (A-1): required secrets must be present.
+    assert_paper_lock()
     get_settings()
     yield
 

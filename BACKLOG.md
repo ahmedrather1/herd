@@ -21,6 +21,7 @@
 - **Partial failure:** sequential, stop on first failure; sells-first/buys-second so a stop lands in cash; report N of M (D15).
 - **Success = orders accepted** by Alpaca, not filled (D16).
 - **Market closed:** propose, warn, hold (D17). **Invalid orders:** reject with reason (D18). **Confirm-time re-validation** of positions/prices (D19).
+- **Paper-lock scope:** guard covers the paper **trading** host only; read-only market-data host is separate and cannot place orders, so it doesn't weaken the lock; no config path to any URL (D44, implements D25).
 - **Audit:** full trail incl. proposed + submitted orders + Alpaca responses + timestamps (D20); store LLM prompt+response (D21); viewable log in v1, undo deferred (D22); state persisted locally, e.g. SQLite (D23).
 - **Interface:** minimal local web UI (D24).
 - **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library. New deps still need approval (D28).
