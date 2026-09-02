@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (added tech stack §6 and testing strategy §7)
+- Last updated: 2026-09-02 (added tech stack §6 + testing strategy §7; locked libraries D33–D40)
 
 ---
 
@@ -70,20 +70,28 @@ implicit in code or chat.
 | D27 | **Frontend = React SPA** talking to the backend API. | Flexible path toward the eventual real frontend (D24). |
 | D28 | **Stack governance: approve each major library.** Claude proposes any significant dependency and waits for the user's explicit yes before it is adopted; the approved choice is then recorded here. | User wants control over lock-in/architecture choices. |
 
-### Pending library approvals (proposed, NOT yet locked — await user yes per D28)
-- Web framework: **FastAPI** (async, typed, pairs well with a React SPA) — *pending*.
-- DB access for SQLite (D23): **SQLModel or SQLAlchemy** — *pending*.
-- Test runner: **pytest** (+ `pytest-asyncio`) — *pending*.
-- HTTP mocking for Alpaca (D30): **respx** (httpx) or **vcrpy** (recorded cassettes) — *pending*.
-- Browser e2e (D31): **Playwright (Python)** — *pending*.
-- React build/test tooling: **Vite** + **Vitest** + **React Testing Library** — *pending*.
+### Approved libraries (locked 2026-09-02 per D28)
+
+| # | Choice | Role | Notes |
+|---|--------|------|-------|
+| D33 | **FastAPI** (+ Uvicorn) | Backend web/API framework | Async, typed, Pydantic validation; serves the React SPA over JSON. |
+| D34 | **SQLModel** | SQLite data-access (D23) | SQLAlchemy + Pydantic; models double as API schemas. |
+| D35 | **pytest** (+ `pytest-asyncio`) | Python test runner | Unit + integration; async support for FastAPI. |
+| D36 | **alpaca-py** (official SDK) | Alpaca client (A-4) | Wrapped thinly; **paper-lock (D25) enforced in the wrapper**. Tests mock at the wrapper boundary, not HTTP. |
+| D37 | **Hand-written fake wrapper double** | Alpaca mocking (H-2) | No extra dependency. Scriptable positions/prices/clock/buying-power + per-order accept/reject/fail for stop-on-failure (D15) and Alpaca-down (A-5). Supersedes the earlier respx/vcrpy idea. |
+| D38 | **Playwright (Python)** | Full-stack e2e (D31, H-4) | Drives the real React UI against the paper account, in the Python test suite. |
+| D39 | **Vite** | React build tool / dev server | Frontend-only; no backend overlap with FastAPI (Next.js was rejected for running a second server). |
+| D40 | **Vitest + React Testing Library** | React component/unit tests | Vite-native runner; user-centric component tests for UI paths e2e doesn't cover. |
+
+No further libraries are approved. Any new dependency must be proposed and approved (D28)
+before adoption and added to this table.
 
 ## 7. Testing strategy (locked 2026-09-02)
 
 | # | Decision | Rationale |
 |---|----------|-----------|
 | D29 | **Parser (non-deterministic) is tested two ways:** (a) unit/integration tests **mock the LLM** to verify plumbing deterministically in CI; (b) a **separate golden-set eval suite** uses **semantic checks, not exact-match**, to measure real parse quality, run on demand (not every commit). | `parse(x) == y` is unreliable for open-ended NL (D6); plumbing correctness and model quality are different questions. |
-| D30 | **Alpaca in tests:** integration tests use a **mocked/recorded** Alpaca client (fast, deterministic); a **small e2e suite hits the real Alpaca paper sandbox** to prove the wiring. | Balances speed/determinism against proving the real integration works. Paper-locked (D25). |
+| D30 | **Alpaca in tests:** integration tests use a **hand-written fake wrapper double** (D37) around the A-4 boundary (fast, deterministic); a **small e2e suite hits the real Alpaca paper sandbox** to prove the wiring. | Balances speed/determinism against proving the real integration works. Paper-locked (D25). |
 | D31 | **E2E = full stack via browser.** Playwright drives the React UI through request → proposal → confirm → result against the paper account. | Highest confidence on the whole confirm/execute loop, the riskiest surface. |
 | D32 | **Testing is enforced in each ticket's acceptance criteria.** A ticket is not "done" until its required tests (at the appropriate levels) are green. Testing is inline, never deferred to later tickets. | Prevents tests from lagging behind features on a safety-sensitive, real-money-eventually system. |
 

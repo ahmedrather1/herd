@@ -23,7 +23,7 @@
 - **Market closed:** propose, warn, hold (D17). **Invalid orders:** reject with reason (D18). **Confirm-time re-validation** of positions/prices (D19).
 - **Audit:** full trail incl. proposed + submitted orders + Alpaca responses + timestamps (D20); store LLM prompt+response (D21); viewable log in v1, undo deferred (D22); state persisted locally, e.g. SQLite (D23).
 - **Interface:** minimal local web UI (D24).
-- **Stack:** Python backend (D26), React SPA frontend (D27); every major library needs explicit user approval before adoption (D28).
+- **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library. New deps still need approval (D28).
 - **Testing:** parser tested via mocked-LLM CI tests + a separate semantic golden-set eval suite (D29); Alpaca mocked/recorded for integration, real paper sandbox for a small e2e suite (D30); e2e is full-stack via Playwright against paper (D31); tests are part of every ticket's acceptance criteria — not done until green (D32).
 
 ---
@@ -270,7 +270,7 @@ proposal (restatement + basis + mapping + orders + current-vs-target), confirm t
 integration tests (mocked externals) on every commit; the eval and paper-e2e suites are
 opt-in / scheduled, not on every commit.
 **Acceptance criteria.**
-- `pytest` (proposed, pending D28 approval) runs unit + integration locally and in CI.
+- `pytest` (+ `pytest-asyncio`, approved D35) runs unit + integration locally and in CI.
 - CI is green on an empty/placeholder suite; fast tier excludes live LLM and live Alpaca.
 - Separate marked tiers exist for `eval` (H-3) and `e2e` (H-4) so they don't run in the fast tier.
 **Non-goals.** No coverage-percentage gate (D32 chose per-ticket AC over a numeric threshold).
@@ -281,8 +281,8 @@ deterministic account/positions/prices/clock and order submission, plus failure 
 **Acceptance criteria.**
 - Integration tests can script positions, buying power, market open/closed, and per-order accept/reject.
 - Can simulate mid-sequence failure to exercise stop-on-failure/land-in-cash (D15) and Alpaca-down (A-5).
-- Recorded-cassette option (proposed: respx/vcrpy, pending D28) documented for realistic payloads.
-**Non-goals.** Not the real paper client (that's A-4, exercised only by H-4). No live calls here.
+- Implemented as a **hand-written fake double** of the A-4 wrapper interface (D37) — no HTTP-mock dependency.
+**Non-goals.** Not the real paper client (that's A-4, exercised only by H-4). No live calls here. No recorded-cassette / respx-vcrpy layer (rejected in favor of the fake double, D37).
 
 ### H-3 · Parser eval golden set (D29)
 **Description.** A semantic evaluation suite: curated phrasings → expected structured intent,
@@ -294,7 +294,7 @@ graded by meaning rather than exact match. Grows with every parsing-related tick
 **Non-goals.** Not a pass/fail commit gate; it's a quality measurement (D29). No mocked-LLM cases here (those live with the feature).
 
 ### H-4 · Playwright full-stack e2e scaffold (D31)
-**Description.** Playwright (proposed, pending D28) driving the React UI through the full
+**Description.** Playwright-Python (approved D38) driving the React UI through the full
 loop — request → proposal → confirm → result — against the Alpaca **paper** sandbox.
 **Acceptance criteria.**
 - A smoke e2e completes the happy-path loop end to end against paper.
