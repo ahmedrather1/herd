@@ -42,6 +42,70 @@ ticket; the blanket rules above always apply on top.
 
 ---
 
+## Dependency & parallelization map
+
+> Purpose: let a fresh session pick concurrent work without re-deriving the graph.
+> Parallelism is real at the **ticket** level; some epics only partly parallelize
+> (notably A, G, and H), so this is expressed per ticket. "Blocked by" = hard
+> prerequisites. Once a ticket's blockers are done, it can run alongside anything else
+> whose blockers are also done.
+
+### Blocked-by table
+
+| Ticket | Blocked by | Can start once… |
+|--------|-----------|-----------------|
+| A-1 skeleton/config | — | immediately (root) |
+| A-2 paper-lock | A-1 | A-1 done |
+| A-3 persistence | A-1 | A-1 done |
+| A-4 Alpaca client (interface) | A-1, A-2 | A-2 done — publish the interface early |
+| A-4 Alpaca client (impl) | A-4 interface | interface defined |
+| A-5 Alpaca-unavailable | A-4 impl | A-4 impl done |
+| B-1 NL → intent | A-1 | A-1 done (Anthropic key configured) |
+| B-2 %-basis resolution | B-1 | B-1 done |
+| B-3 category→symbol | B-1, A-4 interface | both done (validate against A-4) |
+| B-4 conversational context | B-1, A-3 | both done |
+| C-1 intent → orders | B-2, A-4 impl | both done |
+| C-2 constraint-solving | C-1 | C-1 done |
+| C-3 current-vs-target | A-4 impl | A-4 impl done (pairs with C-1) |
+| D-1 restatement + proposal | C-1, B-2, B-3, C-3 | all done |
+| D-2 order validation | C-1, A-4 impl | both done (can precede D-1) |
+| D-3 market-closed | A-4 impl, D-1 | both done |
+| D-4 confirm-time re-validation | D-1, D-2, A-4 impl | all done |
+| E-1 sequential execution | D-4, A-4 impl | both done |
+| E-2 result reporting | E-1 | E-1 done |
+| F-1 audit record | A-3 | A-3 done (schema can precede data producers) |
+| F-2 viewable audit log | F-1 | F-1 done |
+| G-1 UI — scaffold | A-1 | A-1 done (build against a mocked API) |
+| G-1 UI — integration | backend endpoints from D-1..D-4, E-1/E-2 | those endpoints exist |
+| G-2 history view UI | F-2, G-1 integration | both done |
+| H-1 test runner / CI | A-1 | A-1 done |
+| H-2 fake Alpaca double | A-4 interface | interface defined |
+| H-3 parser eval golden set | B-1 | B-1 done (grows with B-2/B-3) |
+| H-4 Playwright e2e scaffold | G-1 integration, D/E loop | full loop works |
+
+### Suggested waves (each wave's tickets run concurrently)
+
+- **Wave 0 (serial):** A-1.
+- **Wave 1 (parallel):** A-2, A-3, H-1, B-1, G-1(scaffold).
+- **Wave 2 (parallel):** A-4 (interface→impl), H-2, B-2, B-3, B-4, F-1.
+- **Wave 3 (parallel):** A-5, C-1, C-3, H-3.
+- **Wave 4 (parallel):** C-2, D-2.
+- **Wave 5 (parallel):** D-1, D-3, D-4.
+- **Wave 6 (parallel):** E-1, E-2, G-1(integration), F-2.
+- **Wave 7 (parallel):** G-2, H-4.
+
+### Concurrent workstreams (big picture)
+
+After the thin core (A-1, A-2, A-4 interface), these tracks run in parallel:
+**Parser (B + H-3)** ∥ **Alpaca core (rest of A)** ∥ **Audit store (F)** ∥
+**UI shell (G scaffold)** ∥ **Test infra (H-1/H-2)**.
+
+They converge on the **critical path**: `B + A-4 → C → D → E`, which cannot be
+parallelized with itself and therefore sets the schedule. Pull B and A-4 forward to
+unblock it as early as possible. G's real integration and H-4 land only after D/E exist.
+
+---
+
 ## Epic A — Foundation, config & safety rails
 
 ### A-1 · Project skeleton & configuration
