@@ -1,0 +1,48 @@
+# --- Secrets / config (NEVER commit — Alpaca & Anthropic keys live here) ---
+.env
+.env.*
+!.env.example
+*.pem
+secrets/
+
+# --- Local data / audit store (SQLite, D23) ---
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / React frontend ---
+node_modules/
+frontend/dist/
+frontend/build/
+.vite/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Playwright (e2e, D31) ---
+test-results/
+playwright-report/
+playwright/.cache/
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
