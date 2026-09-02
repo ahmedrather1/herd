@@ -33,6 +33,19 @@ This file is auto-loaded at the start of every session. Follow it before doing a
 - **Paper-lock is an invariant (D25):** v1 code must be physically unable to reach a live
   Alpaca endpoint. Treat any change that could weaken this as a stop-and-flag event.
 
+## Milestone workflow (commit/push cadence)
+
+At each **completed milestone** (a ticket whose acceptance criteria + Definition of Done
+are met and verified — e.g. A-1, A-2, …):
+
+1. **Present a summary of the changes** — what was built, what was verified, which
+   decisions were recorded, and any caveats. Not a raw file list; the same kind of
+   readable summary used when reporting work.
+2. **Wait for the user's explicit approval.** Do not commit or push before they say yes.
+3. **On approval, commit + push to `main`.** Commit direct to `main` (no feature
+   branches/PRs for this solo project), clear message with the `Co-Authored-By` trailer,
+   then push to `origin` (private GitHub repo `herd`).
+
 ## Requirements audit (after finishing each epic)
 
 Run the checklist at the bottom of `BACKLOG.md`: scan for tickets whose acceptance
