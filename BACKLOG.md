@@ -24,6 +24,7 @@
 - **Audit:** full trail incl. proposed + submitted orders + Alpaca responses + timestamps (D20); store LLM prompt+response (D21); viewable log in v1, undo deferred (D22); state persisted locally, e.g. SQLite (D23).
 - **Interface:** minimal local web UI (D24).
 - **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library. New deps still need approval (D28).
+- **Layout & tooling:** repo is `backend/` + `frontend/` (D41); Python env/deps managed by **uv** with `pyproject.toml` + `uv.lock`, all Python commands run via `uv run …` (D42). Config loading via **pydantic-settings** (D43, approved per D28).
 - **Testing:** parser tested via mocked-LLM CI tests + a separate semantic golden-set eval suite (D29); Alpaca mocked/recorded for integration, real paper sandbox for a small e2e suite (D30); e2e is full-stack via Playwright against paper (D31); tests are part of every ticket's acceptance criteria — not done until green (D32).
 
 ---

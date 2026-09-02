@@ -1,0 +1,37 @@
+"""FastAPI application entrypoint (A-1).
+
+Boots the app and validates configuration on startup (fail-fast, A-1). Feature
+endpoints (propose/confirm/execute, audit log) land in later epics (D/E/F/G);
+for now this exposes a health check and proves the app + config wiring works.
+"""
+
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from .config import get_settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Validate config at startup so a misconfigured app fails immediately and
+    # loudly rather than on the first Alpaca/Anthropic call (A-1).
+    get_settings()
+    yield
+
+
+app = FastAPI(
+    title="NL Portfolio Rebalancer",
+    version="0.1.0",
+    summary="Single-user, paper-locked natural-language portfolio rebalancer (v1).",
+    lifespan=lifespan,
+)
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    """Liveness probe; also confirms config loaded (get_settings would have raised)."""
+    get_settings()
+    return {"status": "ok"}

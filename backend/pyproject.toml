@@ -1,0 +1,32 @@
+[project]
+name = "rebalancer"
+version = "0.1.0"
+description = "Single-user, paper-locked natural-language portfolio rebalancer (v1) backend."
+readme = "README.md"
+authors = [
+    { name = "Ahmed Rather", email = "ahmedrather.s@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "pydantic-settings>=2.15.0",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[project.scripts]
+rebalancer = "rebalancer:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (added tech stack §6 + testing strategy §7; locked libraries D33–D40)
+- Last updated: 2026-09-02 (locked repo layout + Python tooling D41–D42; A-1 scaffolding started)
 
 ---
 
@@ -69,6 +69,8 @@ implicit in code or chat.
 | D26 | **Backend = Python.** | First-party Alpaca + Anthropic SDKs; strong fit for parsing/planning logic and pytest ecosystem. |
 | D27 | **Frontend = React SPA** talking to the backend API. | Flexible path toward the eventual real frontend (D24). |
 | D28 | **Stack governance: approve each major library.** Claude proposes any significant dependency and waits for the user's explicit yes before it is adopted; the approved choice is then recorded here. | User wants control over lock-in/architecture choices. |
+| D41 | **Repo layout = `backend/` + `frontend/`.** Top-level `backend/` holds the FastAPI app, `pyproject.toml`, and Python tests; top-level `frontend/` holds the Vite React app. Each keeps its own tooling; no root-level mixing of Python and JS tooling. | Cleanest separation for the Python+React split (D26/D27); each side reproducible on its own. |
+| D42 | **Python env/deps = uv** (`pyproject.toml` + `uv.lock`). All Python commands run via `uv` (`uv sync`, `uv run …`); the lockfile pins exact versions for reproducible CI (H-1) and safety-sensitive test runs (D32). | Real lockfile (vs. loose `requirements.txt`) matters for a real-money-eventually system; fast, standards-based, less venv-activate ceremony. Tooling choice surfaced for approval per D28 spirit. |
 
 ### Approved libraries (locked 2026-09-02 per D28)
 
@@ -82,6 +84,7 @@ implicit in code or chat.
 | D38 | **Playwright (Python)** | Full-stack e2e (D31, H-4) | Drives the real React UI against the paper account, in the Python test suite. |
 | D39 | **Vite** | React build tool / dev server | Frontend-only; no backend overlap with FastAPI (Next.js was rejected for running a second server). |
 | D40 | **Vitest + React Testing Library** | React component/unit tests | Vite-native runner; user-centric component tests for UI paths e2e doesn't cover. |
+| D43 | **pydantic-settings** | Env/config loading (A-1) | Official Pydantic companion; reads `.env` + real env vars, validates required secrets, fails fast (no silent defaults per A-1). Approved 2026-09-02 per D28. |
 
 No further libraries are approved. Any new dependency must be proposed and approved (D28)
 before adoption and added to this table.
