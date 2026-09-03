@@ -49,10 +49,15 @@ backend/
     __init__.py      # `main()` entrypoint (uv run rebalancer)
     config.py        # Settings + fail-fast loading (A-1)
     paperlock.py     # pinned paper endpoint + guard + startup check (A-2/D25)
+    alpaca/          # Alpaca client boundary (A-4)
+      client.py      #   AlpacaClient ABC (interface; impl wraps alpaca-py later)
+      models.py      #   domain types (Decimal money, D45)
+      errors.py      #   typed error hierarchy
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     test_config.py   # config fail-fast contract
     test_paperlock.py# paper-lock invariant (accepts paper, refuses live)
+    test_alpaca_interface.py  # A-4 interface: implementable, models/errors valid
     test_app.py      # app boots + serves /health
   pyproject.toml     # deps + pytest config
   .env.example       # template (copy to .env)

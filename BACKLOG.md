@@ -26,6 +26,7 @@
 - **Interface:** minimal local web UI (D24).
 - **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library. New deps still need approval (D28).
 - **Layout & tooling:** repo is `backend/` + `frontend/` (D41); Python env/deps managed by **uv** with `pyproject.toml` + `uv.lock`, all Python commands run via `uv run …` (D42). Config loading via **pydantic-settings** (D43, approved per D28).
+- **Money = `Decimal`** everywhere, never float (D45). **Alpaca client boundary is synchronous**, FastAPI offloads to a threadpool (D46).
 - **Testing:** parser tested via mocked-LLM CI tests + a separate semantic golden-set eval suite (D29); Alpaca mocked/recorded for integration, real paper sandbox for a small e2e suite (D30); e2e is full-stack via Playwright against paper (D31); tests are part of every ticket's acceptance criteria — not done until green (D32).
 
 ---
@@ -140,10 +141,11 @@ must be physically unreachable, not merely a default.
 **Description.** Thin client over the Alpaca paper API for the calls the app needs:
 account/buying-power, positions, latest prices, clock/market-hours, submit order, order status.
 **Acceptance criteria.**
-- Read methods: account, positions, latest quote/price, market clock.
+- Read methods: account, positions, latest quote/price, market clock, **asset tradability** (`get_asset`, added at interface time to satisfy B-3 symbol validation + D-2 fractional/qty rules — 2026-09-02), order status.
 - Write method: submit single order (used sequentially by execution).
-- Network/API errors surface as typed errors the caller can branch on (used by A-5 and Epic E).
+- Network/API errors surface as typed errors the caller can branch on (used by A-5 and Epic E): `AlpacaUnavailableError`, `AlpacaRequestError`, `OrderRejectedError`.
 - All calls go through the paper-locked base URL from A-2.
+- **Interface published** (2026-09-02): `AlpacaClient` ABC + Pydantic domain models (Decimal, D45) + typed errors, synchronous (D46). Impl (alpaca-py) still pending.
 **Non-goals.** No order batching primitives, no websocket/streaming, no live endpoints.
 
 ### A-5 · Alpaca-unavailable handling (referenced by D17/D19/E)

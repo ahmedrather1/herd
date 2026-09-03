@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (A-1 landed; A-2 paper-lock implemented, scoped D44)
+- Last updated: 2026-09-02 (A-4 interface published: AlpacaClient + models + typed errors; D45–D46)
 
 ---
 
@@ -86,6 +86,8 @@ implicit in code or chat.
 | D39 | **Vite** | React build tool / dev server | Frontend-only; no backend overlap with FastAPI (Next.js was rejected for running a second server). |
 | D40 | **Vitest + React Testing Library** | React component/unit tests | Vite-native runner; user-centric component tests for UI paths e2e doesn't cover. |
 | D43 | **pydantic-settings** | Env/config loading (A-1) | Official Pydantic companion; reads `.env` + real env vars, validates required secrets, fails fast (no silent defaults per A-1). Approved 2026-09-02 per D28. |
+| D45 | **Money & quantities are `Decimal`, never `float`.** All cash, prices, share quantities, notional amounts across the Alpaca boundary, planner, and audit trail use `Decimal`. | Binary floats can't represent decimal cash/share values exactly; unacceptable on a real-money-eventually system. Cross-cutting through A-4/C/D/E. |
+| D46 | **Alpaca client boundary is synchronous;** FastAPI offloads calls to a threadpool. The `AlpacaClient` interface (A-4) exposes sync methods. | alpaca-py SDK is synchronous; a sync wrapper keeps the fake double (H-2) and tests simple, with no async coloring through the planner. |
 
 No further libraries are approved. Any new dependency must be proposed and approved (D28)
 before adoption and added to this table.
