@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (A-4 interface published: AlpacaClient + models + typed errors; D45–D46)
+- Last updated: 2026-09-02 (H-2 fake Alpaca double landed against the A-4 interface; no new decisions)
 
 ---
 

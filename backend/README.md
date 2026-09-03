@@ -55,9 +55,12 @@ backend/
       errors.py      #   typed error hierarchy
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
+    fakes/
+      fake_alpaca.py # hand-written scriptable AlpacaClient double (H-2/D37)
     test_config.py   # config fail-fast contract
     test_paperlock.py# paper-lock invariant (accepts paper, refuses live)
     test_alpaca_interface.py  # A-4 interface: implementable, models/errors valid
+    test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
   pyproject.toml     # deps + pytest config
   .env.example       # template (copy to .env)
