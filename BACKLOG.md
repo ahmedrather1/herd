@@ -145,7 +145,8 @@ account/buying-power, positions, latest prices, clock/market-hours, submit order
 - Write method: submit single order (used sequentially by execution).
 - Network/API errors surface as typed errors the caller can branch on (used by A-5 and Epic E): `AlpacaUnavailableError`, `AlpacaRequestError`, `OrderRejectedError`.
 - All calls go through the paper-locked base URL from A-2.
-- **Interface published** (2026-09-02): `AlpacaClient` ABC + Pydantic domain models (Decimal, D45) + typed errors, synchronous (D46). Impl (alpaca-py) still pending.
+- **Interface published** (2026-09-02): `AlpacaClient` ABC + Pydantic domain models (Decimal, D45) + typed errors, synchronous (D46).
+- **Impl landed** (2026-09-02, D47): `PaperAlpacaClient` (`alpaca/paper_client.py`) wraps alpaca-py; `paper=True` + construction-time `verify_paper_only` on the SDK base URL (paper-lock unreachable-by-construction); SDK↔domain mapping (Decimal), latest-trade prices on the read-only data host, and `APIError`/transport→typed-error translation. Tests inject SDK stubs at the wrapper boundary (D30); real-sandbox proof is the e2e suite (D31).
 **Non-goals.** No order batching primitives, no websocket/streaming, no live endpoints.
 
 ### A-5 · Alpaca-unavailable handling (referenced by D17/D19/E)

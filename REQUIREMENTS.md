@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-02 (H-2 fake Alpaca double landed against the A-4 interface; no new decisions)
+- Last updated: 2026-09-02 (A-4 impl landed — alpaca-py paper client wraps the interface; D47 recorded)
 
 ---
 
@@ -88,6 +88,7 @@ implicit in code or chat.
 | D43 | **pydantic-settings** | Env/config loading (A-1) | Official Pydantic companion; reads `.env` + real env vars, validates required secrets, fails fast (no silent defaults per A-1). Approved 2026-09-02 per D28. |
 | D45 | **Money & quantities are `Decimal`, never `float`.** All cash, prices, share quantities, notional amounts across the Alpaca boundary, planner, and audit trail use `Decimal`. | Binary floats can't represent decimal cash/share values exactly; unacceptable on a real-money-eventually system. Cross-cutting through A-4/C/D/E. |
 | D46 | **Alpaca client boundary is synchronous;** FastAPI offloads calls to a threadpool. The `AlpacaClient` interface (A-4) exposes sync methods. | alpaca-py SDK is synchronous; a sync wrapper keeps the fake double (H-2) and tests simple, with no async coloring through the planner. |
+| D47 | **A-4 impl = `PaperAlpacaClient` (`alpaca/paper_client.py`) wrapping alpaca-py.** Specifics: (a) trading client is always built `paper=True` and, belt-and-suspenders, its resolved SDK base URL is run through `verify_paper_only` at construction — construction fails fast if it isn't the pinned paper host (strengthens D25/D44). (b) Read-only prices use the **latest trade** (`get_stock_latest_trade`) on the separate data host; a requested symbol absent from the response raises `AlpacaRequestError`. (c) **Error mapping:** SDK `APIError` with status ≥ 500 or no status, and any transport (`requests`) error → `AlpacaUnavailableError`; 4xx → `AlpacaRequestError` (`OrderRejectedError` w/ symbol for order submit). (d) Amounts handed to the SDK are passed as **decimal strings** so we never construct a float (D45); the SDK's internal float is its own boundary. (e) `get_alpaca_client()` is a cached process-wide provider (SDK construction does no network I/O). | Makes the client real for C/D/E while keeping the paper-lock unreachable-by-construction and the app free of SDK shapes. |
 
 No further libraries are approved. Any new dependency must be proposed and approved (D28)
 before adoption and added to this table.

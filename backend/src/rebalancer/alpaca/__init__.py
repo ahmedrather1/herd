@@ -24,9 +24,12 @@ from .models import (
     SubmittedOrder,
     TimeInForce,
 )
+from .paper_client import PaperAlpacaClient, get_alpaca_client
 
 __all__ = [
     "AlpacaClient",
+    "PaperAlpacaClient",
+    "get_alpaca_client",
     "AlpacaError",
     "AlpacaUnavailableError",
     "AlpacaRequestError",
