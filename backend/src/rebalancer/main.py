@@ -13,6 +13,7 @@ from fastapi import FastAPI
 
 from .config import get_settings
 from .paperlock import assert_paper_lock
+from .store import get_engine
 
 
 @asynccontextmanager
@@ -22,6 +23,8 @@ async def lifespan(app: FastAPI):
     #  - config (A-1): required secrets must be present.
     assert_paper_lock()
     get_settings()
+    # Local datastore (A-3/D49): create the SQLite file + tables on first run.
+    get_engine()
     yield
 
 

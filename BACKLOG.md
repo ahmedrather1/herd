@@ -136,6 +136,13 @@ must be physically unreachable, not merely a default.
 - State survives process restart.
 - A single documented file/location; creation is automatic on first run.
 **Non-goals.** No remote DB, no migrations framework beyond what's needed for v1, no multi-user partitioning.
+- **Landed** (2026-09-05, D49): `rebalancer/store/` — SQLModel + SQLite, fully normalized
+  (`AppSession→Conversation→Request→{LlmCall, Intent, Proposal→ProposedOrder, OrderExecution}`),
+  Decimal money stored as exact TEXT via `DecimalString` (D45), `AuditStore` write/read API.
+  Single file at `backend/data/rebalancer.db` (git-ignored), auto-created in the app lifespan;
+  engine factory takes a URL / `REBALANCER_DB_URL` env for tests. No migration framework —
+  drop-and-recreate in dev (D49). `Intent`/`Proposal` are lean first-cuts, expanded by B-1/D-1;
+  F-1 wires the full end-to-end record.
 
 ### A-4 · Alpaca paper client wrapper
 **Description.** Thin client over the Alpaca paper API for the calls the app needs:
@@ -150,6 +157,12 @@ account/buying-power, positions, latest prices, clock/market-hours, submit order
 **Non-goals.** No order batching primitives, no websocket/streaming, no live endpoints.
 
 ### A-5 · Alpaca-unavailable handling (referenced by D17/D19/E)
+> **Re-validated 2026-09-03 (D48): not built standalone.** All three criteria depend on
+> surfaces that don't exist yet — propose/validate (Epic D), mid-execution (Epic E), audit
+> trail (A-3/F-1). Realized *inside* those epics as they land; the blocks (A-4
+> `AlpacaUnavailableError`, H-2 `set_unavailable`/`fail_after`) already exist. This ticket
+> is a tracking checklist verified as D/E/F land, not code written ahead of its callers.
+
 **Description.** Define and implement behavior when Alpaca is unreachable or errors mid-flow.
 **Acceptance criteria.**
 - If Alpaca is down during propose/validate: no orders submitted; user sees a clear "can't reach Alpaca, try again" state.

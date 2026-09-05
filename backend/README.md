@@ -41,6 +41,17 @@ There is **no paper/live toggle**. "Live mode" is a separate, deliberately-built
 feature with its own guardrails — it does not exist in v1. The read-only market-data host
 (prices/quotes) is a distinct concern handled in A-4 and cannot place orders (D44).
 
+## Persistence (A-3, D49)
+
+Local SQLite datastore (SQLModel) for session/conversation state and the audit trail
+(D20/D21). A single file at `backend/data/rebalancer.db` (git-ignored) is **auto-created on
+first run** (app lifespan). Set `REBALANCER_DB_URL` to override the location (tests point it
+at a temp DB). Money and quantities are stored as **exact TEXT** via `DecimalString` — never
+float (D45). The schema is fully normalized; there is **no migration framework** in v1 —
+during dev the schema evolves by drop-and-recreate (no precious data yet), and Alembic is
+adopted deliberately later. `Intent`/`Proposal` tables are lean first-cuts, expanded by
+B-1/D-1; F-1 wires the full end-to-end record.
+
 ## Layout
 
 ```
@@ -49,6 +60,10 @@ backend/
     __init__.py      # `main()` entrypoint (uv run rebalancer)
     config.py        # Settings + fail-fast loading (A-1)
     paperlock.py     # pinned paper endpoint + guard + startup check (A-2/D25)
+    store/           # local persistence: SQLite via SQLModel (A-3/D49)
+      db.py          #   engine + DecimalString type (Decimal as exact TEXT, D45)
+      models.py      #   normalized audit/session tables
+      audit.py       #   AuditStore write/read API
     alpaca/          # Alpaca client boundary (A-4)
       client.py      #   AlpacaClient ABC (interface)
       paper_client.py#   PaperAlpacaClient — alpaca-py wrapper, paper-locked (A-4 impl, D47)
@@ -62,6 +77,7 @@ backend/
     test_paperlock.py# paper-lock invariant (accepts paper, refuses live)
     test_alpaca_interface.py  # A-4 interface: implementable, models/errors valid
     test_paper_client.py      # A-4 impl: paper-lock, SDK↔domain mapping, error translation
+    test_store.py             # A-3 persistence: graph round-trip, Decimal-as-text, restart
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
   pyproject.toml     # deps + pytest config
