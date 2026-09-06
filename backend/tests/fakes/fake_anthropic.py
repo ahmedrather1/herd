@@ -13,10 +13,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from rebalancer.parsing.parser import WireParsedIntent
 
-
-def make_response(wire: WireParsedIntent | None, *, stop_reason: str = "end_turn") -> object:
+def make_response(wire: object | None, *, stop_reason: str = "end_turn") -> object:
     text = wire.model_dump_json() if wire is not None else "{}"
     block = SimpleNamespace(type="text", text=text, parsed_output=wire)
     return SimpleNamespace(

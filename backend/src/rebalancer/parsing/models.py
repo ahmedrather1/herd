@@ -110,3 +110,38 @@ class ParseResult:
     raw_prompt: str
     raw_response: str | None
     model: str
+
+
+@dataclass(frozen=True)
+class SymbolMapping:
+    """One resolved operation target → concrete tradable symbols (B-3, D5).
+
+    ``source`` records how it was resolved: ``literal`` (the target already was a ticker),
+    ``holdings`` (a sell/reduce category resolved to the user's matching positions), or
+    ``proposed`` (a buy/allocation category the model mapped to representative symbols).
+    """
+
+    target: str
+    action: str
+    symbols: tuple[str, ...]
+    source: str  # "literal" | "holdings" | "proposed"
+    note: str = ""
+
+
+@dataclass(frozen=True)
+class MappingResult:
+    """Outcome of resolving every category term in an intent (B-3).
+
+    ``ok`` is False in two distinct ways: ``refusal`` is set when a term is unmappable or
+    untradable (D10 — refuse the whole request, never map partially); ``error`` is set when
+    the LLM call itself failed. Alpaca-unavailable is not represented here — it propagates
+    as ``AlpacaUnavailableError`` for the caller's A-5 handling.
+    """
+
+    ok: bool
+    mappings: tuple[SymbolMapping, ...]
+    refusal: str | None
+    error: str | None
+    raw_prompt: str | None
+    raw_response: str | None
+    model: str

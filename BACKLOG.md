@@ -210,6 +210,14 @@ dynamically via the LLM, constrained to tradable US equities/ETFs.
 - The resulting mapping is captured so it can be shown to the user at confirm (D5, D4).
 - Symbols are validated as Alpaca-tradable before use.
 **Non-goals.** No fixed/curated category dictionary as the primary mechanism; no non-US or non-equity/ETF assets.
+- **Landed** (2026-09-06, D51): `parsing/mapping.py` — `SymbolResolver` resolves each intent
+  operation target. Literal tradable tickers pass through; category words go through one
+  `messages.parse` call and every proposed symbol is validated via A-4 `get_asset`.
+  **Sells are holdings-aware** (resolved only to matching current positions; none → refuse);
+  **buys lean to a representative US-listed ETF**. Unmappable/untradable term → refuse the
+  whole request (D10, no partial). Alpaca-unavailable propagates (A-5). `MappingResult`
+  distinguishes refusal (D10) from LLM error. Validated against A-4 via the H-2 fake; LLM
+  mocked (D29); H-3 gains a mapping eval case. Mapping + raw prompt/response captured (D5/D21).
 
 ### B-4 · Conversational context (D7)
 **Description.** Support multi-turn follow-ups that reference the prior proposal

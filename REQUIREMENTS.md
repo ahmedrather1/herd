@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-06 (B-1 parser landed — NL→intent via anthropic messages.parse; D50. Prior: A-3 store/D49, A-5 defer/D48)
+- Last updated: 2026-09-06 (B-3 category→symbol mapping landed — holdings-aware sells / ETF buys; D51. Prior: B-1/D50, A-3/D49, A-5/D48)
 
 ---
 
@@ -86,6 +86,7 @@ implicit in code or chat.
 | D39 | **Vite** | React build tool / dev server | Frontend-only; no backend overlap with FastAPI (Next.js was rejected for running a second server). |
 | D40 | **Vitest + React Testing Library** | React component/unit tests | Vite-native runner; user-centric component tests for UI paths e2e doesn't cover. |
 | D43 | **pydantic-settings** | Env/config loading (A-1) | Official Pydantic companion; reads `.env` + real env vars, validates required secrets, fails fast (no silent defaults per A-1). Approved 2026-09-02 per D28. |
+| D51 | **B-3 category→symbol mapping = `SymbolResolver`** (LLM + A-4 `get_asset`). (Chosen 2026-09-06.) Per operation target: a literal tradable ticker maps to itself; a **category word** is resolved by one `messages.parse` call and every proposed symbol is validated tradable via `get_asset`. **Sell/reduce categories are holdings-aware** — resolved only to the user's current positions that fit the category (you can only sell what you hold; nothing held → refuse). **Buy/allocation categories lean to a single representative US-listed ETF** (the LLM proposes; shown at confirm, D4/D5). Any unmappable or untradable term **refuses the whole request with an explanation (D10 — no partial mapping)**. Alpaca-unavailable propagates (A-5), not a refusal. Mapping + raw prompt/response captured for confirm/audit (D5/D20/D21); LLM injected → mocked in tests (D29), quality measured in H-3. | Holdings-aware sells are a correctness requirement, not UX; representative-ETF buys keep the mapping predictable and easy to confirm; refuse-whole matches D10's no-partial posture. |
 | D50 | **anthropic** (official SDK) | Claude parser (B-1, D14) | Approved 2026-09-06 per D28. NL→intent via `client.messages.parse(output_format=<Pydantic>)` → validated `parsed_output`; malformed/refused output surfaces as a parse failure (B-1). **Default model `claude-sonnet-5`, configurable via env `ANTHROPIC_MODEL`** (user brings own key, D13 — their token cost; bump to Opus per-request if a phrasing misparses). Parser takes an injected client so unit/integration tests **mock the LLM** (D29); the semantic golden-set eval (H-3) hits the real model on demand. |
 | D45 | **Money & quantities are `Decimal`, never `float`.** All cash, prices, share quantities, notional amounts across the Alpaca boundary, planner, and audit trail use `Decimal`. | Binary floats can't represent decimal cash/share values exactly; unacceptable on a real-money-eventually system. Cross-cutting through A-4/C/D/E. |
 | D46 | **Alpaca client boundary is synchronous;** FastAPI offloads calls to a threadpool. The `AlpacaClient` interface (A-4) exposes sync methods. | alpaca-py SDK is synchronous; a sync wrapper keeps the fake double (H-2) and tests simple, with no async coloring through the planner. |

@@ -7,20 +7,24 @@ implementation detail of ``parser`` and is not re-exported here.
 
 from __future__ import annotations
 
+from .mapping import SymbolResolver
 from .models import (
     Amount,
     AmountBasis,
     Constraint,
     Intent,
+    MappingResult,
     Operation,
     ParsedIntent,
     ParseResult,
     ParseStatus,
+    SymbolMapping,
 )
 from .parser import IntentParser
 
 __all__ = [
     "IntentParser",
+    "SymbolResolver",
     "ParseResult",
     "ParsedIntent",
     "ParseStatus",
@@ -29,4 +33,6 @@ __all__ = [
     "Amount",
     "AmountBasis",
     "Constraint",
+    "MappingResult",
+    "SymbolMapping",
 ]

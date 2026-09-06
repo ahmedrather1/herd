@@ -62,7 +62,13 @@ the result is a discriminated `ParseResult` — `parsed` / `needs_clarification`
 wire and become exact `Decimal` in the domain contract (never float, D45). Default model is
 `claude-sonnet-5` (override with `ANTHROPIC_MODEL`; the user brings their own key, D13). The
 Anthropic client is injected, so unit/integration tests mock the LLM (D29); the semantic
-golden-set eval (H-3, `tests/eval/`) hits the real model on demand:
+golden-set eval (H-3, `tests/eval/`) hits the real model on demand.
+
+**Category → symbol (B-3, D51).** `SymbolResolver` turns an intent's raw targets ("tech",
+"bonds") into validated tradable symbols: literal tickers pass through; sells are
+holdings-aware (only what you currently hold); buys lean to a representative US-listed ETF;
+every symbol is checked tradable via the A-4 `get_asset`. An unmappable/untradable term
+refuses the whole request (D10). Runs against the real model in the eval:
 
 ```bash
 RUN_EVAL=1 uv run pytest -m eval      # opt-in; excluded from the fast tier
@@ -85,9 +91,10 @@ backend/
       paper_client.py#   PaperAlpacaClient — alpaca-py wrapper, paper-locked (A-4 impl, D47)
       models.py      #   domain types (Decimal money, D45)
       errors.py      #   typed error hierarchy
-    parsing/         # NL → structured intent via Claude (B-1/D50)
-      parser.py      #   IntentParser + wire schema for messages.parse
-      models.py      #   intent contract (Intent/Operation/Constraint, ParseResult)
+    parsing/         # NL understanding (Epic B)
+      parser.py      #   B-1: IntentParser + wire schema for messages.parse (D50)
+      mapping.py     #   B-3: SymbolResolver — category→symbol, holdings-aware (D51)
+      models.py      #   contract (Intent/Operation/Constraint, ParseResult, MappingResult)
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     fakes/
@@ -98,7 +105,8 @@ backend/
     test_paper_client.py      # A-4 impl: paper-lock, SDK↔domain mapping, error translation
     test_store.py             # A-3 persistence: graph round-trip, Decimal-as-text, restart
     test_parser.py            # B-1 parser: outcomes, mapping, failure modes (mocked LLM)
-    eval/                     # H-3 parser golden set (marked `eval`, opt-in — real model)
+    test_mapping.py           # B-3 resolver: literals, holdings-aware sells, refuse (mocked LLM)
+    eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
   pyproject.toml     # deps + pytest config
