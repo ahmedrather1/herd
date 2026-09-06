@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     alpaca_key: str = Field(..., description="Alpaca API key ID (paper account).")
     alpaca_secret: str = Field(..., description="Alpaca API secret key (paper account).")
     anthropic_api_key: str = Field(..., description="Anthropic API key for the Claude parser (D14).")
+    # Parser model (D50). Has a default (not a secret); override via ANTHROPIC_MODEL.
+    # Sonnet balances cost/quality for a BYO-key user (D13); bump to an Opus id if a
+    # phrasing misparses.
+    anthropic_model: str = Field(
+        "claude-sonnet-5", description="Claude model id for the NL parser (B-1, D50)."
+    )
 
     @field_validator("alpaca_key", "alpaca_secret", "anthropic_api_key")
     @classmethod

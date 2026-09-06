@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "alpaca-py>=0.44.0",
+    "anthropic>=1.4.0",
     "fastapi>=0.141.1",
     "pydantic-settings>=2.15.0",
     "sqlmodel>=0.0.42",
@@ -32,3 +33,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Fast tier by default (D29/H-1): the parser-quality eval (H-3) and browser e2e (H-4) are
+# marked and excluded here. Run them explicitly, e.g. `uv run pytest -m eval`.
+addopts = ["-m", "not eval and not e2e"]
+markers = [
+    "eval: semantic parser-quality golden set, hits the real LLM (H-3); opt-in",
+    "e2e: full-stack browser tests against the paper account (H-4); opt-in",
+]

@@ -52,6 +52,22 @@ during dev the schema evolves by drop-and-recreate (no precious data yet), and A
 adopted deliberately later. `Intent`/`Proposal` tables are lean first-cuts, expanded by
 B-1/D-1; F-1 wires the full end-to-end record.
 
+## Parser (B-1, D50)
+
+Free-form requests become a validated structured **intent** via Claude
+(`rebalancer/parsing`). `IntentParser` calls `anthropic` `messages.parse(output_format=…)`;
+the result is a discriminated `ParseResult` — `parsed` / `needs_clarification` /
+`unsupported`, or `ok=False` for a refusal, empty, malformed, or errored response, which
+**never executes** and routes to clarify/retry (D4/D10). Amounts travel as strings on the
+wire and become exact `Decimal` in the domain contract (never float, D45). Default model is
+`claude-sonnet-5` (override with `ANTHROPIC_MODEL`; the user brings their own key, D13). The
+Anthropic client is injected, so unit/integration tests mock the LLM (D29); the semantic
+golden-set eval (H-3, `tests/eval/`) hits the real model on demand:
+
+```bash
+RUN_EVAL=1 uv run pytest -m eval      # opt-in; excluded from the fast tier
+```
+
 ## Layout
 
 ```
@@ -69,6 +85,9 @@ backend/
       paper_client.py#   PaperAlpacaClient — alpaca-py wrapper, paper-locked (A-4 impl, D47)
       models.py      #   domain types (Decimal money, D45)
       errors.py      #   typed error hierarchy
+    parsing/         # NL → structured intent via Claude (B-1/D50)
+      parser.py      #   IntentParser + wire schema for messages.parse
+      models.py      #   intent contract (Intent/Operation/Constraint, ParseResult)
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     fakes/
@@ -78,6 +97,8 @@ backend/
     test_alpaca_interface.py  # A-4 interface: implementable, models/errors valid
     test_paper_client.py      # A-4 impl: paper-lock, SDK↔domain mapping, error translation
     test_store.py             # A-3 persistence: graph round-trip, Decimal-as-text, restart
+    test_parser.py            # B-1 parser: outcomes, mapping, failure modes (mocked LLM)
+    eval/                     # H-3 parser golden set (marked `eval`, opt-in — real model)
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
   pyproject.toml     # deps + pytest config

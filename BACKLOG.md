@@ -24,7 +24,7 @@
 - **Paper-lock scope:** guard covers the paper **trading** host only; read-only market-data host is separate and cannot place orders, so it doesn't weaken the lock; no config path to any URL (D44, implements D25).
 - **Audit:** full trail incl. proposed + submitted orders + Alpaca responses + timestamps (D20); store LLM prompt+response (D21); viewable log in v1, undo deferred (D22); state persisted locally, e.g. SQLite (D23).
 - **Interface:** minimal local web UI (D24).
-- **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library. New deps still need approval (D28).
+- **Stack:** Python backend (D26), React SPA frontend (D27); libraries approved (D33–D40, D43, D50): FastAPI, SQLModel, pytest, alpaca-py (wrapped, paper-locked), hand-written fake Alpaca double, Playwright-Python, Vite, Vitest + React Testing Library, pydantic-settings, anthropic (Claude parser). New deps still need approval (D28).
 - **Layout & tooling:** repo is `backend/` + `frontend/` (D41); Python env/deps managed by **uv** with `pyproject.toml` + `uv.lock`, all Python commands run via `uv run …` (D42). Config loading via **pydantic-settings** (D43, approved per D28).
 - **Money = `Decimal`** everywhere, never float (D45). **Alpaca client boundary is synchronous**, FastAPI offloads to a threadpool (D46).
 - **Testing:** parser tested via mocked-LLM CI tests + a separate semantic golden-set eval suite (D29); Alpaca mocked/recorded for integration, real paper sandbox for a small e2e suite (D30); e2e is full-stack via Playwright against paper (D31); tests are part of every ticket's acceptance criteria — not done until green (D32).
@@ -183,6 +183,14 @@ account/buying-power, positions, latest prices, clock/market-hours, submit order
 - The raw prompt and raw response are persisted (D21).
 - Low-confidence or unparseable input routes to confirm/clarify, never to silent action (D4).
 **Non-goals.** No order generation here (that's Epic C). No provider abstraction — Claude only (D14).
+- **Landed** (2026-09-06, D50): `rebalancer/parsing/` — `IntentParser` calls `anthropic`
+  `messages.parse(output_format=WireParsedIntent)`; result is a discriminated `ParseResult`
+  (parsed / needs_clarification / unsupported, or `ok=False` for refusal / no-output /
+  malformed / API error — never executes). Domain contract in `parsing/models.py`
+  (`Intent`→`Operation`+`Constraint`, `AmountBasis`, Decimal money via string-on-wire, D45).
+  Default model `claude-sonnet-5` (env `ANTHROPIC_MODEL`). Raw prompt+response captured for
+  the audit trail (D21). LLM injected → mocked in unit tests (D29). B-2 (basis math) and B-3
+  (category→symbol) refine downstream; this captures the raw reading only.
 
 ### B-2 · Percentage-basis resolution (D2)
 **Description.** Resolve what a percentage/amount means for each request: target weights,
@@ -374,6 +382,10 @@ graded by meaning rather than exact match. Grows with every parsing-related tick
 - Grading is semantic (field-level/assertion-based), tolerant of surface variation.
 - Runs on demand against real Claude; reports pass rate; not in the fast CI tier.
 **Non-goals.** Not a pass/fail commit gate; it's a quality measurement (D29). No mocked-LLM cases here (those live with the feature).
+- **Seeded** (2026-09-06, with B-1): `tests/eval/` — `golden.py` (6 cases: %-basis variants,
+  constraints, crypto-refuse, exclusion) + `test_parser_eval.py`, marked `eval` and excluded
+  from the fast tier (pyproject `addopts`). Opt-in: `RUN_EVAL=1 uv run pytest -m eval`. Grows
+  with B-2/B-3. (The fast-tier marker split satisfies H-1's third criterion early.)
 
 ### H-4 · Playwright full-stack e2e scaffold (D31)
 **Description.** Playwright-Python (approved D38) driving the React UI through the full
