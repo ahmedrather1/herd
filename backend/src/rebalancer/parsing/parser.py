@@ -63,6 +63,10 @@ When status is "parsed", fill `intent`:
   - "shares"                   e.g. "10 shares"
 - `amount.value` is a STRING number (e.g. "60", "5000", "0.5"); omit it only if there is
   truly no number. `amount.raw_phrase` is the original words.
+- `amount.basis_explicit`: true if the user stated what the number is measured against
+  (said "of my portfolio", named a target weight, gave a dollar amount, or a share count);
+  false for a bare percentage that does not say what it is a percentage of (e.g. just
+  "10%" or "half"). This lets the app apply a safe default without guessing.
 - `constraints`: cash floors ("cash_floor"), exclusions ("exclude_asset", with the
   symbol/word in `target`), "only using new deposits" ("only_new_deposits"), else "other".
   `value` (a STRING number) and `raw_phrase` as applicable.
@@ -79,6 +83,7 @@ class WireAmount(BaseModel):
     value: str | None = None
     basis: AmountBasis
     raw_phrase: str = ""
+    basis_explicit: bool = True
 
 
 class WireOperation(BaseModel):
@@ -120,7 +125,12 @@ def _dec(value: str | None) -> Decimal | None:
 def _to_amount(wire: WireAmount | None) -> Amount | None:
     if wire is None:
         return None
-    return Amount(value=_dec(wire.value), basis=wire.basis, raw_phrase=wire.raw_phrase)
+    return Amount(
+        value=_dec(wire.value),
+        basis=wire.basis,
+        raw_phrase=wire.raw_phrase,
+        basis_explicit=wire.basis_explicit,
+    )
 
 
 def _to_domain(wire: WireParsedIntent) -> ParsedIntent:

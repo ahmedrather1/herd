@@ -64,6 +64,12 @@ wire and become exact `Decimal` in the domain contract (never float, D45). Defau
 Anthropic client is injected, so unit/integration tests mock the LLM (D29); the semantic
 golden-set eval (H-3, `tests/eval/`) hits the real model on demand.
 
+**Basis guardrail (B-2, D52).** `resolve_basis` is deterministic logic (no LLM, no account
+state) that makes the parsed reading safe: a percentage the user didn't state the basis of
+defaults to *% of source position* (D2), flagged and noted so it's never silent; incoherent
+readings (a % over 100, target weights summing past 100%) route to clarify. The dollar/share
+math stays in the planner (C-1) on live state (D19).
+
 **Category → symbol (B-3, D51).** `SymbolResolver` turns an intent's raw targets ("tech",
 "bonds") into validated tradable symbols: literal tickers pass through; sells are
 holdings-aware (only what you currently hold); buys lean to a representative US-listed ETF;
@@ -93,6 +99,7 @@ backend/
       errors.py      #   typed error hierarchy
     parsing/         # NL understanding (Epic B)
       parser.py      #   B-1: IntentParser + wire schema for messages.parse (D50)
+      basis.py       #   B-2: resolve_basis — deterministic default/coherence guardrail (D52)
       mapping.py     #   B-3: SymbolResolver — category→symbol, holdings-aware (D51)
       models.py      #   contract (Intent/Operation/Constraint, ParseResult, MappingResult)
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
@@ -105,6 +112,7 @@ backend/
     test_paper_client.py      # A-4 impl: paper-lock, SDK↔domain mapping, error translation
     test_store.py             # A-3 persistence: graph round-trip, Decimal-as-text, restart
     test_parser.py            # B-1 parser: outcomes, mapping, failure modes (mocked LLM)
+    test_basis.py             # B-2 basis guardrail: defaulting + coherence (pure logic)
     test_mapping.py           # B-3 resolver: literals, holdings-aware sells, refuse (mocked LLM)
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage

@@ -50,6 +50,12 @@ class Amount(BaseModel):
     value: Decimal | None = None
     basis: AmountBasis
     raw_phrase: str = ""  # the original words ("half", "10%", "$5k") — for confirm/audit
+    # Did the user state what the percentage is *of*? (Set by the parser, B-1.) When False,
+    # B-2 applies the D2 default (→ percent_source_position) deterministically.
+    basis_explicit: bool = True
+    # Set by B-2 when it applied the ambiguity default — shown at confirm so the assumed
+    # reading is never silent (D2/D4).
+    basis_defaulted: bool = False
 
 
 class Operation(BaseModel):
@@ -110,6 +116,23 @@ class ParseResult:
     raw_prompt: str
     raw_response: str | None
     model: str
+
+
+@dataclass(frozen=True)
+class ResolutionResult:
+    """Outcome of the deterministic basis-resolution guardrail (B-2, D2/D52).
+
+    ``intent`` is the normalized intent (amounts with the basis finalized and any default
+    flagged). ``needs_clarification`` is set when the reading is incoherent (e.g. target
+    weights summing over 100%, an out-of-range percentage) and must route to clarify rather
+    than execute (D2 — no silent guessing). ``notes`` is the human-readable record of any
+    assumptions applied, for the confirm screen (D4).
+    """
+
+    ok: bool
+    intent: "Intent | None"
+    needs_clarification: str | None
+    notes: tuple[str, ...]
 
 
 @dataclass(frozen=True)

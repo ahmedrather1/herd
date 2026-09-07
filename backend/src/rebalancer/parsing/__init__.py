@@ -7,6 +7,7 @@ implementation detail of ``parser`` and is not re-exported here.
 
 from __future__ import annotations
 
+from .basis import resolve_basis
 from .mapping import SymbolResolver
 from .models import (
     Amount,
@@ -18,6 +19,7 @@ from .models import (
     ParsedIntent,
     ParseResult,
     ParseStatus,
+    ResolutionResult,
     SymbolMapping,
 )
 from .parser import IntentParser
@@ -25,9 +27,11 @@ from .parser import IntentParser
 __all__ = [
     "IntentParser",
     "SymbolResolver",
+    "resolve_basis",
     "ParseResult",
     "ParsedIntent",
     "ParseStatus",
+    "ResolutionResult",
     "Intent",
     "Operation",
     "Amount",

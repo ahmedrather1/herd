@@ -201,6 +201,12 @@ when genuinely ambiguous.
 - Ambiguous phrasing defaults to % of source position **and** the chosen basis is recorded so it can be shown at confirm (D4).
 - The resolved basis is part of the structured intent (B-1).
 **Non-goals.** No silent guessing without recording the chosen reading.
+- **Landed** (2026-09-06, D52): `parsing/basis.py` `resolve_basis()` — a deterministic
+  guardrail over B-1's parse (no LLM, no account state). Applies the D2 ambiguity default
+  (bare/unstated % → `percent_source_position`, flagged `basis_defaulted`, noted for
+  confirm); validates coherence (% in (0,100], `set_allocation` weights ≤ 100 → else
+  clarify). Dollar/share math stays in C-1 on live state (D19). Added `basis_explicit` to
+  the parse schema (`Amount`). Pure unit tests (deterministic — no mocks).
 
 ### B-3 · Category → symbol mapping (D5)
 **Description.** Map category words ("tech", "bonds") to concrete Alpaca-tradable symbols
