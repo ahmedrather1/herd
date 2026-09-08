@@ -194,3 +194,11 @@ class AuditStore:
                 return None
             s.expunge_all()
             return row
+
+    def list_requests(self, limit: int = 50) -> list[Request]:
+        """Return recent requests (newest first), without children — for the history list (F-2)."""
+        with session_scope(self._engine) as s:
+            stmt = select(Request).order_by(Request.created_at.desc()).limit(limit)
+            rows = list(s.exec(stmt).all())
+            s.expunge_all()
+            return rows

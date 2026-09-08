@@ -99,6 +99,24 @@ def test_confirm_unknown_request_is_404(client):
     assert r.status_code == 404
 
 
+def test_audit_history_endpoints(client):
+    request_id = client.post("/api/propose", json={"request_text": "put 10% in bonds"}).json()["request_id"]
+    client.post("/api/confirm", json={"request_id": request_id})
+
+    listing = client.get("/api/requests").json()
+    assert any(row["request_id"] == request_id for row in listing)
+
+    detail = client.get(f"/api/requests/{request_id}").json()
+    assert detail["raw_text"] == "put 10% in bonds"
+    assert {c["purpose"] for c in detail["llm_calls"]} == {"parse", "category_map"}
+    assert detail["proposals"][0]["legs"][0]["symbol"] == "BND"
+    assert detail["executions"][0]["status"] == "accepted"
+
+
+def test_get_unknown_request_is_404(client):
+    assert client.get("/api/requests/nope").status_code == 404
+
+
 def test_propose_clarify(tmp_path, monkeypatch):
     _config_env(monkeypatch)
     engine = make_engine(f"sqlite:///{tmp_path / 'c.db'}")

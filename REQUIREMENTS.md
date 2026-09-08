@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-08 (HTTP API landed — propose/confirm routes wire the backend end-to-end; D58. Prior: D-4/E/D57, D-1/D56, C-2/D55)
+- Last updated: 2026-09-08 (F-2 read API landed — GET /api/requests[/{id}] audit-log endpoints; no new decision. Prior: API/D58, D-4/E/D57)
 
 ---
 

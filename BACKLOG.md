@@ -376,6 +376,11 @@ failure and its reason, and cash left over.
 - Records are linked into their conversation/session (B-4, A-3).
 **Non-goals.** No redaction/retention tooling in v1 (bounded by self-host, D12).
 
+> **Read-API landed** (2026-09-08): `GET /api/requests` (recent, newest-first) and
+> `GET /api/requests/{id}` (full record: raw text, LLM prompt+response, proposal legs,
+> executions, timestamps) back the viewable log (`AuditStore.list_requests` + `get_request`).
+> The *view* itself is part of the frontend (G).
+
 ### F-2 · Viewable audit log (D22)
 **Description.** Let the user browse the history of requests, proposals, and executions.
 **Acceptance criteria.**

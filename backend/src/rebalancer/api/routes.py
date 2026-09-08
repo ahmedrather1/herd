@@ -25,8 +25,12 @@ from .schemas import (
     ConfirmResponse,
     ProposeRequest,
     ProposeResponse,
+    RequestDetailSchema,
+    RequestSummarySchema,
     outcome_to_schema,
     report_to_schema,
+    request_to_detail,
+    request_to_summary,
 )
 
 router = APIRouter(prefix="/api", tags=["rebalancer"])
@@ -52,6 +56,23 @@ def confirm(
         raise HTTPException(status_code=404, detail="No proposal found for that request id.")
     report = execution.confirm_and_execute(plan, request_id=body.request_id)
     return report_to_schema(report)
+
+
+@router.get("/requests", response_model=list[RequestSummarySchema])
+def list_requests(
+    limit: int = 50, store: AuditStore = Depends(get_store)
+) -> list[RequestSummarySchema]:
+    """Recent requests, newest first — the viewable audit log (F-2/D22)."""
+    return [request_to_summary(r) for r in store.list_requests(limit=limit)]
+
+
+@router.get("/requests/{request_id}", response_model=RequestDetailSchema)
+def get_request(request_id: str, store: AuditStore = Depends(get_store)) -> RequestDetailSchema:
+    """The full stored record for one request (raw text, LLM calls, proposal, executions)."""
+    request = store.get_request(request_id)
+    if request is None:
+        raise HTTPException(status_code=404, detail="No such request.")
+    return request_to_detail(request)
 
 
 def _load_plan(store: AuditStore, request_id: str) -> Plan | None:

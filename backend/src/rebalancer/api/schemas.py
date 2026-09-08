@@ -121,6 +121,92 @@ def outcome_to_schema(outcome) -> ProposeResponse:
     )
 
 
+class RequestSummarySchema(BaseModel):
+    request_id: str
+    raw_text: str
+    status: str
+    created_at: str
+
+
+class LlmCallSchema(BaseModel):
+    purpose: str
+    model: str
+    prompt: str
+    response: str
+    created_at: str
+
+
+class ProposalLegSchema(BaseModel):
+    symbol: str
+    side: str
+    sequence_index: int
+    qty: str | None = None
+    notional: str | None = None
+
+
+class StoredProposalSchema(BaseModel):
+    summary: str | None = None
+    created_at: str
+    legs: list[ProposalLegSchema] = []
+
+
+class ExecutionSchema(BaseModel):
+    symbol: str
+    side: str
+    status: str
+    qty: str | None = None
+    notional: str | None = None
+    alpaca_order_id: str | None = None
+    created_at: str
+
+
+class RequestDetailSchema(RequestSummarySchema):
+    llm_calls: list[LlmCallSchema] = []
+    proposals: list[StoredProposalSchema] = []
+    executions: list[ExecutionSchema] = []
+
+
+def _iso(dt) -> str:
+    return dt.isoformat() if dt is not None else ""
+
+
+def request_to_summary(request) -> RequestSummarySchema:
+    return RequestSummarySchema(
+        request_id=request.id,
+        raw_text=request.raw_text,
+        status=request.status.value if hasattr(request.status, "value") else str(request.status),
+        created_at=_iso(request.created_at),
+    )
+
+
+def request_to_detail(request) -> RequestDetailSchema:
+    return RequestDetailSchema(
+        **request_to_summary(request).model_dump(),
+        llm_calls=[
+            LlmCallSchema(purpose=c.purpose, model=c.model, prompt=c.prompt, response=c.response, created_at=_iso(c.created_at))
+            for c in request.llm_calls
+        ],
+        proposals=[
+            StoredProposalSchema(
+                summary=p.summary,
+                created_at=_iso(p.created_at),
+                legs=[
+                    ProposalLegSchema(symbol=leg.symbol, side=leg.side, sequence_index=leg.sequence_index, qty=_s(leg.qty), notional=_s(leg.notional))
+                    for leg in sorted(p.legs, key=lambda leg: leg.sequence_index)
+                ],
+            )
+            for p in request.proposals
+        ],
+        executions=[
+            ExecutionSchema(
+                symbol=e.symbol, side=e.side, status=e.status, qty=_s(e.qty), notional=_s(e.notional),
+                alpaca_order_id=e.alpaca_order_id, created_at=_iso(e.created_at),
+            )
+            for e in request.executions
+        ],
+    )
+
+
 def report_to_schema(report) -> ConfirmResponse:
     return ConfirmResponse(
         status=report.status.value,
