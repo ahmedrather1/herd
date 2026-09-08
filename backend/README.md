@@ -116,6 +116,7 @@ backend/
       models.py      #   contract (Intent/Operation/Constraint, ParseResult, MappingResult)
     planning/        # rebalance planning (Epic C)
       planner.py     #   C-1: Planner — resolved intent → ordered order set (D53)
+      allocation.py  #   C-3: compute_allocation — current-vs-target for confirm (D24)
       models.py      #   Plan / PlannedOrder
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
@@ -130,6 +131,7 @@ backend/
     test_basis.py             # B-2 basis guardrail: defaulting + coherence (pure logic)
     test_mapping.py           # B-3 resolver: literals, holdings-aware sells, refuse (mocked LLM)
     test_planner.py           # C-1 planner: sizing rules, whole-portfolio rebalance (fake Alpaca)
+    test_allocation.py        # C-3 current-vs-target: reconciliation with the order set
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health

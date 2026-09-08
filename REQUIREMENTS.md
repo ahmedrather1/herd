@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-07 (C-1 planner landed — intent→ordered orders, whole-portfolio rebalance; D53. Prior: B-2/D52, B-3/D51, B-1/D50)
+- Last updated: 2026-09-08 (C-3 current-vs-target landed — display-only, reconciles with C-1; no new decision. Prior: C-1/D53, B-2/D52, B-3/D51)
 
 ---
 

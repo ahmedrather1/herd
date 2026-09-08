@@ -270,6 +270,12 @@ by the proposal, for display.
 - Returns per-category/per-symbol current % and target %, plus the deltas the orders will attempt.
 - Numbers reconcile with the concrete order set from C-1.
 **Non-goals.** No post-execution reconciliation guarantee (success = accepted, D16).
+- **Landed** (2026-09-08): `planning/allocation.py` `compute_allocation(plan, alpaca)` →
+  `AllocationReport` of per-symbol current % / target % / delta. Target is derived from the
+  plan (current value + each order's signed value effect), so it reconciles with the C-1
+  order set by construction. Values qty orders at holdings price (fetches for unheld symbols,
+  read-only D44); display-only (D24). Per-**category** grouping deferred (can layer on B-3
+  mappings later — flagged, low-risk display choice). 6 deterministic tests vs. the H-2 fake.
 
 ---
 

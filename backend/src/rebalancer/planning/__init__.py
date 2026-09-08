@@ -6,7 +6,15 @@ target display (C-3) build on it.
 
 from __future__ import annotations
 
+from .allocation import AllocationReport, AllocationRow, compute_allocation
 from .models import Plan, PlannedOrder
 from .planner import Planner
 
-__all__ = ["Planner", "Plan", "PlannedOrder"]
+__all__ = [
+    "Planner",
+    "Plan",
+    "PlannedOrder",
+    "compute_allocation",
+    "AllocationReport",
+    "AllocationRow",
+]
