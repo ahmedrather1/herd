@@ -246,6 +246,13 @@ concrete ordered list of buy/sell orders.
 - Orders are ordered **sells-first, buys-second** (D15).
 - Uses live positions/buying power from A-4.
 **Non-goals.** No submission (Epic E). No handling of invalid orders here beyond producing them for validation (D-2).
+- **Landed** (2026-09-07, D53): `planning/planner.py` `Planner.plan(intent, mappings)` →
+  ordered `Plan`. Notional for $ targets/buys, qty for position-relative sells; `set_allocation`
+  weights summing ~100% = whole-portfolio rebalance (liquidate the rest); semantics per
+  (action, basis); sells-first/buys-second (D15); amounts rounded down (never oversell/
+  overspend). No validation (D-2) or constraints (C-2). Reads `get_account`+`get_positions`
+  from A-4; Alpaca-unavailable propagates (A-5). Deterministic — 12 integration tests vs. the
+  H-2 fake, no LLM.
 
 ### C-2 · Constraint-solving (D8, D10)
 **Description.** Honor request constraints: cash floors ("keep $5k cash"), exclusions

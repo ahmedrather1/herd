@@ -74,7 +74,19 @@ math stays in the planner (C-1) on live state (D19).
 "bonds") into validated tradable symbols: literal tickers pass through; sells are
 holdings-aware (only what you currently hold); buys lean to a representative US-listed ETF;
 every symbol is checked tradable via the A-4 `get_asset`. An unmappable/untradable term
-refuses the whole request (D10). Runs against the real model in the eval:
+refuses the whole request (D10). Runs against the real model in the eval.
+
+## Planning (C-1, D53)
+
+`Planner.plan(intent, mappings)` (`rebalancer/planning`) turns a resolved intent + symbols +
+**live** account state into an ordered `Plan` of buy/sell orders. Dollar-denominated buys and
+target adjustments use **notional**; position-relative sells use **qty** taken exactly from
+holdings. `set_allocation` target weights summing to ~100% trigger a **whole-portfolio
+rebalance** (unmentioned holdings are liquidated to fund the targets); a partial set adjusts
+only that category. Orders are **sells-first, buys-second** (D15) and amounts round **down**
+(never oversell/overspend). The planner does not validate (buying power / fractional /
+minimums are D-2) or apply constraints (C-2); it reads `get_account` + `get_positions` from
+A-4 (notional avoids a price fetch) and lets Alpaca-unavailable propagate (A-5).
 
 ```bash
 RUN_EVAL=1 uv run pytest -m eval      # opt-in; excluded from the fast tier
@@ -102,6 +114,9 @@ backend/
       basis.py       #   B-2: resolve_basis — deterministic default/coherence guardrail (D52)
       mapping.py     #   B-3: SymbolResolver — category→symbol, holdings-aware (D51)
       models.py      #   contract (Intent/Operation/Constraint, ParseResult, MappingResult)
+    planning/        # rebalance planning (Epic C)
+      planner.py     #   C-1: Planner — resolved intent → ordered order set (D53)
+      models.py      #   Plan / PlannedOrder
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     fakes/
@@ -114,6 +129,7 @@ backend/
     test_parser.py            # B-1 parser: outcomes, mapping, failure modes (mocked LLM)
     test_basis.py             # B-2 basis guardrail: defaulting + coherence (pure logic)
     test_mapping.py           # B-3 resolver: literals, holdings-aware sells, refuse (mocked LLM)
+    test_planner.py           # C-1 planner: sizing rules, whole-portfolio rebalance (fake Alpaca)
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
