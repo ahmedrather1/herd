@@ -295,6 +295,12 @@ the resolved % basis, the category→symbol mapping, the literal orders, and cur
 - Restatement surfaces the chosen amount-basis (D2) and symbol mapping (D5) so a wrong interpretation is visible before acting.
 - Proposal is persisted (D20).
 **Non-goals.** No size-based extra confirmation step (D9). No auto-confirm.
+- **Landed** (2026-09-08, D56): `proposal/service.py` `ProposalService.propose(text)` →
+  `ProposalOutcome` (PROPOSAL / CLARIFY / REFUSE / UNAVAILABLE / ERROR) assembling the whole
+  read-side pipeline. Restatement = parser summary + basis notes + mapping + constraints (no
+  extra LLM call — flagged). Persists request/LLM-calls/proposal via AuditStore (D20). Also
+  realizes **D-3** (closed market → proposal + warning) and **A-5** propose-side (Alpaca-down
+  → UNAVAILABLE). 9 pipeline tests (mocked LLM + H-2 fake + store).
 
 ### D-2 · Order validation & reject-with-reason (D18)
 **Description.** Validate the proposed orders against Alpaca rules (buying power,
@@ -316,6 +322,9 @@ fractional/qty limits) before showing/executing.
 - Market-closed state is detected (A-4 clock) and shown on the proposal.
 - Orders are not submitted while closed until the user confirms; no silent queuing.
 **Non-goals.** No scheduling/queuing orders for next open.
+- **Landed** (2026-09-08, with D-1/D56): market-closed state (A-4 clock) surfaces as a
+  `PROPOSAL` carrying a warning; no submission while closed until confirm. Tested in
+  `test_proposal.py::test_market_closed_proposal_carries_warning`.
 
 ### D-4 · Confirm-time re-validation (D19)
 **Description.** On confirm, re-fetch positions/prices, re-run validation, and if the

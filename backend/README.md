@@ -120,6 +120,9 @@ backend/
       constraints.py #   C-2: ConstraintSolver — floor/exclusion/deposits, refuse (D8/D55)
       validation.py  #   D-2: OrderValidator — reject-with-reason vs Alpaca rules (D18/D54)
       models.py      #   Plan / PlannedOrder
+    proposal/        # proposal & confirmation loop (Epic D)
+      service.py     #   D-1: ProposalService — assemble a confirmable proposal (D56)
+      models.py      #   Proposal / ProposalOutcome
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     fakes/
@@ -136,6 +139,7 @@ backend/
     test_allocation.py        # C-3 current-vs-target: reconciliation with the order set
     test_constraints.py       # C-2 constraints: floor, exclusion, refusals
     test_validation.py        # D-2 validation: buying power, fractional/qty, reject reasons
+    test_proposal.py          # D-1 pipeline: proposal/clarify/refuse/unavailable + persistence
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health
