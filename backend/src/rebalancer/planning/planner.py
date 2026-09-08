@@ -49,7 +49,25 @@ class Planner:
     def plan(self, intent: Intent, mappings: Sequence[SymbolMapping]) -> Plan:
         account = self._alpaca.get_account()  # AlpacaUnavailable → propagates (A-5)
         positions = {p.symbol.upper(): p for p in self._alpaca.get_positions()}
-        equity = account.equity
+        return self.plan_from_state(intent, mappings, account=account, positions=positions)
+
+    def plan_from_state(
+        self,
+        intent: Intent,
+        mappings: Sequence[SymbolMapping],
+        *,
+        account,
+        positions: dict[str, Position],
+        investable_equity: Decimal | None = None,
+        protected: frozenset[str] = frozenset(),
+    ) -> Plan:
+        """Build a plan from already-fetched state (C-1), optionally under constraints (C-2).
+
+        ``investable_equity`` overrides the equity base used for target sizing (e.g. after a
+        cash floor / set-aside holdings, C-2); ``protected`` symbols are never sold.
+        """
+        equity = investable_equity if investable_equity is not None else account.equity
+        protected = frozenset(s.upper() for s in protected)
         by_key = {(m.target.strip().lower(), m.action): m for m in mappings}
 
         sells: list[PlannedOrder] = []
@@ -67,7 +85,7 @@ class Planner:
         ]
         weight_sum = sum((op.amount.value for op in rebalance_ops), Decimal("0"))
         if rebalance_ops and abs(weight_sum - _HUNDRED) <= _WEIGHT_TOLERANCE:
-            self._plan_full_rebalance(rebalance_ops, by_key, positions, equity, sells, buys, notes)
+            self._plan_full_rebalance(rebalance_ops, by_key, positions, equity, protected, sells, buys, notes)
             handled = {id(op) for op in rebalance_ops}
 
         for op in intent.operations:
@@ -79,13 +97,15 @@ class Planner:
                 notes.append(f"no symbols mapped for {op.target!r}; skipped")
                 continue
             for order in self._plan_operation(op, symbols, positions, equity):
+                if order.side is OrderSide.SELL and order.symbol.upper() in protected:
+                    continue  # constraint: never sell a protected symbol (C-2)
                 (sells if order.side is OrderSide.SELL else buys).append(order)
 
         return Plan(orders=tuple(sells) + tuple(buys), notes=tuple(notes))  # sells-first (D15)
 
     # --- whole-portfolio rebalance -------------------------------------------
 
-    def _plan_full_rebalance(self, rebalance_ops, by_key, positions, equity, sells, buys, notes):
+    def _plan_full_rebalance(self, rebalance_ops, by_key, positions, equity, protected, sells, buys, notes):
         targets: dict[str, Decimal] = {}
         for op in rebalance_ops:
             mapping = by_key.get((op.target.strip().lower(), op.action))
@@ -99,9 +119,9 @@ class Planner:
 
         notes.append("Whole-portfolio rebalance: holdings outside the target set are sold.")
 
-        # Liquidate everything not in the target set.
+        # Liquidate everything not in the target set (except protected holdings, C-2).
         for sym, pos in positions.items():
-            if sym not in targets and pos.qty > 0:
+            if sym not in targets and sym not in protected and pos.qty > 0:
                 sells.append(
                     PlannedOrder(sym, OrderSide.SELL, f"liquidate {sym} (not in target allocation)", qty=_qty(pos.qty))
                 )

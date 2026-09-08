@@ -117,6 +117,7 @@ backend/
     planning/        # rebalance planning (Epic C)
       planner.py     #   C-1: Planner — resolved intent → ordered order set (D53)
       allocation.py  #   C-3: compute_allocation — current-vs-target for confirm (D24)
+      constraints.py #   C-2: ConstraintSolver — floor/exclusion/deposits, refuse (D8/D55)
       validation.py  #   D-2: OrderValidator — reject-with-reason vs Alpaca rules (D18/D54)
       models.py      #   Plan / PlannedOrder
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
@@ -133,6 +134,7 @@ backend/
     test_mapping.py           # B-3 resolver: literals, holdings-aware sells, refuse (mocked LLM)
     test_planner.py           # C-1 planner: sizing rules, whole-portfolio rebalance (fake Alpaca)
     test_allocation.py        # C-3 current-vs-target: reconciliation with the order set
+    test_constraints.py       # C-2 constraints: floor, exclusion, refusals
     test_validation.py        # D-2 validation: buying power, fractional/qty, reject reasons
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage

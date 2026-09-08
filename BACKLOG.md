@@ -262,6 +262,12 @@ concrete ordered list of buy/sell orders.
 - Conflicting/unsatisfiable constraint sets produce **no partial orders** — they route to refuse+explain stating what couldn't be satisfied (D10).
 - Constraints applied are captured for display at confirm.
 **Non-goals.** No optimization objective beyond satisfying stated constraints; no constraint types not listed here in v1.
+- **Landed** (2026-09-08, D55 ⚠️): `planning/constraints.py` `ConstraintSolver.solve(intent, mappings)`
+  → `PlanResult` (ok+plan+applied, or refuse). cash_floor → reduce investable base; exclusion
+  → set-aside (protected, value out of base); only_new_deposits + unsatisfiable numerics →
+  refuse (D10). Applied constraints returned for confirm. Integrated via planner
+  `plan_from_state(investable_equity, protected)`. ⚠️ Default readings flagged (QUESTIONS.md).
+  7 deterministic tests vs. the H-2 fake.
 
 ### C-3 · Current-vs-target computation (supports D24)
 **Description.** Compute and expose current allocation vs. the target allocation implied
