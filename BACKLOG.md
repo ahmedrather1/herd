@@ -297,6 +297,12 @@ fractional/qty limits) before showing/executing.
 - Invalid orders are rejected with a specific human-readable reason; the proposal contains no invalid orders (D18).
 - User is told what to adjust; nothing is auto-adjusted.
 **Non-goals.** No "adjust and warn" auto-correction. No submitting-and-letting-Alpaca-reject.
+- **Landed** (2026-09-08, D54 ⚠️): `planning/validation.py` `OrderValidator.validate(plan)` →
+  `ValidationResult` (ok + per-order/plan-level `OrderProblem`s, no auto-adjust, no partial).
+  Rules: tradable/known, notional requires fractionable, no fractional qty on non-fractionable,
+  no overselling (sell qty ≤ held), notional ≥ $1, and **buying power counts expected sell
+  proceeds** (sells-first, D15). ⚠️ Settlement (T+1) / margin not modeled — flagged for review
+  (D54). 12 deterministic tests vs. the H-2 fake.
 
 ### D-3 · Market-closed handling (D17)
 **Description.** When the market is closed, show the proposal with a clear warning and hold.

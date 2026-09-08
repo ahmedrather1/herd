@@ -9,6 +9,7 @@ from __future__ import annotations
 from .allocation import AllocationReport, AllocationRow, compute_allocation
 from .models import Plan, PlannedOrder
 from .planner import Planner
+from .validation import OrderProblem, OrderValidator, ValidationResult
 
 __all__ = [
     "Planner",
@@ -17,4 +18,7 @@ __all__ = [
     "compute_allocation",
     "AllocationReport",
     "AllocationRow",
+    "OrderValidator",
+    "ValidationResult",
+    "OrderProblem",
 ]
