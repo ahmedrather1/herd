@@ -36,4 +36,14 @@ inline or in chat; I'll adjust and re-commit.
   constraints), allocation, and validation aren't persisted yet — that's **F-1**. **OK to leave
   the full record to F-1?**
 
-<!-- New questions get appended below as I build E, etc. -->
+## D-4 / E — confirm re-validation & execution (defaults chosen; see D57)
+
+- **Material-change definition (D-4/D19).** At confirm I re-validate against fresh state and
+  block (`REVALIDATE`, re-show) only when validity **flips to invalid**. I do **not** re-plan
+  on price drift (recompute 60/40 targets against the new equity). *Alternative:* re-plan at
+  confirm and re-show if orders drift beyond a tolerance. **Is validity-flip enough for v1?**
+- **Cash-remaining figure (E-2).** Reported as `account.cash` right after submitting. Because
+  fills are async (D16), this is **pre-settlement** and approximate. **OK to report it with a
+  "pre-settlement" caveat, or omit the dollar figure and just say N of M?**
+
+<!-- New questions get appended below as I build F, G, etc. -->

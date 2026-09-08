@@ -123,6 +123,9 @@ backend/
     proposal/        # proposal & confirmation loop (Epic D)
       service.py     #   D-1: ProposalService — assemble a confirmable proposal (D56)
       models.py      #   Proposal / ProposalOutcome
+    execution/       # execution & reporting (Epic E)
+      service.py     #   D-4/E-1/E-2: re-validate + sequential submit + report (D57)
+      models.py      #   ExecutionReport / ExecutionStatus
     main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
   tests/
     fakes/
@@ -140,6 +143,7 @@ backend/
     test_constraints.py       # C-2 constraints: floor, exclusion, refusals
     test_validation.py        # D-2 validation: buying power, fractional/qty, reject reasons
     test_proposal.py          # D-1 pipeline: proposal/clarify/refuse/unavailable + persistence
+    test_execution.py         # D-4/E: re-validate, stop-on-failure, reporting, persistence
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health

@@ -348,6 +348,10 @@ order; stop on the first failure.
 - "Success" is reported at **order-accepted** granularity (D16).
 - Every submission + Alpaca response recorded (D20).
 **Non-goals.** No unwinding of completed legs. No fill-tracking/allocation-reconciliation as a success gate.
+- **Landed** (2026-09-08, D57): `execution/ExecutionService.confirm_and_execute(plan, request_id)`.
+  Re-validates (D-4), holds if market closed (D17), else submits sells-first one at a time and
+  stops on the first reject/outage (D15), leaving the rest in cash. Records each execution +
+  status (D20). 8 tests via the H-2 accept/reject/fail scripting.
 
 ### E-2 · Result reporting
 **Description.** Report the outcome: completed N of M, which orders were accepted, any
@@ -357,6 +361,9 @@ failure and its reason, and cash left over.
 - Failures show Alpaca's reason.
 - Report is persisted in the audit trail (D20).
 **Non-goals.** No claims about fills or final realized allocation.
+- **Landed** (2026-09-08, with E-1/D57): `ExecutionReport` — status, completed N of M, accepted
+  orders, failure reason, best-effort cash remaining (⚠️ pre-settlement). Persisted via the
+  execution rows + request status (D20).
 
 ---
 
