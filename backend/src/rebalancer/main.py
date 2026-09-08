@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from .api import router as api_router
 from .config import get_settings
 from .paperlock import assert_paper_lock
 from .store import get_engine
@@ -34,6 +35,8 @@ app = FastAPI(
     summary="Single-user, paper-locked natural-language portfolio rebalancer (v1).",
     lifespan=lifespan,
 )
+
+app.include_router(api_router)
 
 
 @app.get("/health")

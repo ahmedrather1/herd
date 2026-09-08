@@ -126,7 +126,11 @@ backend/
     execution/       # execution & reporting (Epic E)
       service.py     #   D-4/E-1/E-2: re-validate + sequential submit + report (D57)
       models.py      #   ExecutionReport / ExecutionStatus
-    main.py          # FastAPI app + /health (feature routes land in D/E/F/G)
+    api/             # HTTP API (D24, D58)
+      routes.py      #   POST /api/propose, POST /api/confirm
+      schemas.py     #   JSON request/response (money as strings, D45)
+      deps.py        #   service dependency providers (overridable in tests)
+    main.py          # FastAPI app: /health + /api routes; lifespan checks (A-1/A-2/A-3)
   tests/
     fakes/
       fake_alpaca.py # hand-written scriptable AlpacaClient double (H-2/D37)
@@ -144,6 +148,7 @@ backend/
     test_validation.py        # D-2 validation: buying power, fractional/qty, reject reasons
     test_proposal.py          # D-1 pipeline: proposal/clarify/refuse/unavailable + persistence
     test_execution.py         # D-4/E: re-validate, stop-on-failure, reporting, persistence
+    test_api.py               # HTTP API: propose→confirm flow, 404, clarify (dep overrides)
     eval/                     # H-3 golden set (parser + mapping); marked `eval`, opt-in
     test_fake_alpaca.py       # the fake double's own coverage
     test_app.py      # app boots + serves /health

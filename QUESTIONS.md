@@ -46,4 +46,26 @@ inline or in chat; I'll adjust and re-commit.
   fills are async (D16), this is **pre-settlement** and approximate. **OK to report it with a
   "pre-settlement" caveat, or omit the dollar figure and just say N of M?**
 
-<!-- New questions get appended below as I build F, G, etc. -->
+## HTTP API (defaults chosen; see D58)
+
+- **Wire contract.** `POST /api/propose` {request_text} → the proposal outcome; `POST /api/confirm`
+  {request_id} → the execution report. Money is serialized as **strings** (exact Decimal, D45).
+  This is what the frontend (G) will code against. **Happy with this shape?** (Full schemas in
+  `api/schemas.py`.)
+- **Confirm is stateless** — it reconstructs the plan from the **persisted proposal** by
+  `request_id` rather than keeping server-side session state. Simple for a single-user local
+  app, but the proposal must have been persisted (store required). **OK?**
+
+## Not yet built (need you, or lower priority)
+
+- **F-1 full audit record** — the rich intent, allocation, and validation results aren't
+  persisted yet (only request / LLM calls / proposal legs / executions). Straightforward to
+  extend; wanted your call on how much to store vs. the lean tables.
+- **F-2 viewable audit log** — a read API + UI over the trail. Backend read is easy; the view
+  is part of the frontend.
+- **Epic G — frontend (React/Vite SPA).** The whole UI is a real design surface (layout, the
+  confirm screen, how the proposal + current-vs-target are shown). I scaffolded nothing yet —
+  this is the biggest "let's design it together" piece. Want me to scaffold G-1 (skeleton) and
+  propose a UI, or wait for you?
+- **H-1 CI** (GitHub Actions running uv + pytest) and **H-4 Playwright e2e** — mechanical;
+  H-4 needs the frontend.
