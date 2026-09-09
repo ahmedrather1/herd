@@ -424,6 +424,10 @@ opt-in / scheduled, not on every commit.
 - CI is green on an empty/placeholder suite; fast tier excludes live LLM and live Alpaca.
 - Separate marked tiers exist for `eval` (H-3) and `e2e` (H-4) so they don't run in the fast tier.
 **Non-goals.** No coverage-percentage gate (D32 chose per-ticket AC over a numeric threshold).
+- **Landed** (2026-09-08): `.github/workflows/ci.yml` — on push-to-main / PR, `astral-sh/setup-uv`
+  (Python 3.12) → `uv sync --locked` → `uv run pytest` (fast tier; eval/e2e excluded by
+  `addopts`, so no secrets/network). `uv sync --locked` verified locally. ⚠️ Not yet observed
+  running on GitHub (can't trigger Actions from here) — confirm on the next push.
 
 ### H-2 · Mock/record Alpaca client (D30)
 **Description.** A test double for the Alpaca client (A-4) usable by unit/integration tests:

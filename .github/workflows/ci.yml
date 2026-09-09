@@ -1,0 +1,30 @@
+name: CI
+
+# Fast tier only (H-1): unit + integration with the LLM and Alpaca faked. The parser-quality
+# eval (H-3) and browser e2e (H-4) are marked and excluded by pyproject `addopts`, so they
+# don't run here — no secrets or network are needed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv + Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install locked dependencies
+        run: uv sync --locked
+
+      - name: Run fast test tier
+        run: uv run pytest
