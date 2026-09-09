@@ -233,6 +233,11 @@ dynamically via the LLM, constrained to tradable US equities/ETFs.
 - Each turn produces a fresh proposal that still passes the full confirm + re-validation flow (Epic D).
 - Session context is persisted (D23) and linked in the audit trail (D20).
 **Non-goals.** No cross-session long-term memory of preferences; no auto-applying a follow-up without re-confirmation.
+- **Landed** (2026-09-08, D59): `ProposalService` returns a `conversation_id`; a follow-up with
+  that id derives context from the conversation's last proposal restatement
+  (`AuditStore.latest_proposal_summary`) and seeds the parser. Fresh proposal per turn through
+  the full confirm/re-validation flow. API `propose` accepts + echoes `conversation_id`. 1
+  two-turn test asserts the follow-up sees the prior proposal as context.
 
 ---
 

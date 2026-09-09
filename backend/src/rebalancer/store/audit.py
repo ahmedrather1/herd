@@ -202,3 +202,16 @@ class AuditStore:
             rows = list(s.exec(stmt).all())
             s.expunge_all()
             return rows
+
+    def latest_proposal_summary(self, conversation_id: str) -> str | None:
+        """Most recent proposal restatement in a conversation — context for follow-ups (B-4)."""
+        with session_scope(self._engine) as s:
+            stmt = (
+                select(Proposal)
+                .join(Request, Proposal.request_id == Request.id)
+                .where(Request.conversation_id == conversation_id)
+                .order_by(Proposal.created_at.desc())
+                .limit(1)
+            )
+            row = s.exec(stmt).first()
+            return row.summary if row is not None else None

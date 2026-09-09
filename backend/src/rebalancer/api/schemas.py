@@ -46,6 +46,7 @@ class AllocationSchema(BaseModel):
 class ProposeResponse(BaseModel):
     status: str
     request_id: str | None = None
+    conversation_id: str | None = None  # echo back to continue the conversation (B-4)
     message: str | None = None
     problems: list[str] = []
     restatement: str | None = None
@@ -110,6 +111,7 @@ def outcome_to_schema(outcome) -> ProposeResponse:
     return ProposeResponse(
         status=outcome.status.value,
         request_id=outcome.request_id,
+        conversation_id=outcome.conversation_id,
         message=outcome.message,
         problems=list(outcome.problems),
         restatement=p.restatement if p else None,

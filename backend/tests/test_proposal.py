@@ -143,6 +143,43 @@ def test_alpaca_unavailable_becomes_unavailable():
 # --- persistence (D20) -------------------------------------------------------
 
 
+def test_followup_threads_prior_proposal_as_context(tmp_path):
+    from rebalancer.store import AuditStore, create_db_and_tables, make_engine
+
+    engine = make_engine(f"sqlite:///{tmp_path / 'conv.db'}")
+    create_db_and_tables(engine)
+    store = AuditStore(engine)
+
+    alpaca = FakeAlpacaClient(equity="10000", buying_power="10000")
+    alpaca.set_unknown_asset("BONDS")
+    fake = FakeAnthropic(
+        _parse(
+            operations=[_op("set_allocation", "stocks", 60, "target_weight"), _op("set_allocation", "bonds", 40, "target_weight")],
+            summary="Rebalance to 60% stocks / 40% bonds.",
+        ),
+        _mapping(stocks=["VTI"], bonds=["BND"]),
+        _parse(
+            operations=[_op("set_allocation", "stocks", 70, "target_weight"), _op("set_allocation", "bonds", 30, "target_weight")],
+            summary="Rebalance to 70/30.",
+        ),
+        _mapping(stocks=["VTI"], bonds=["BND"]),
+    )
+    service = ProposalService(
+        IntentParser(fake, model="m"), SymbolResolver(fake, alpaca, model="m"), alpaca, store
+    )
+
+    first = service.propose("make it 60/40 stocks and bonds")
+    assert first.status is ProposalStatus.PROPOSAL and first.conversation_id
+
+    second = service.propose("actually make it 70/30", conversation_id=first.conversation_id)
+    assert second.status is ProposalStatus.PROPOSAL
+
+    # The follow-up's parse call was seeded with the prior proposal as context (B-4).
+    parse_calls = [c for c in fake.messages.calls if c["output_format"].__name__ == "WireParsedIntent"]
+    turn2_context = parse_calls[1]["messages"][0]["content"]
+    assert "60% stocks" in turn2_context and "70/30" in turn2_context
+
+
 def test_proposal_is_persisted(tmp_path):
     from rebalancer.store import AuditStore, RequestStatus, create_db_and_tables, make_engine
 

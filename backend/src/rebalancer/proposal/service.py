@@ -16,6 +16,8 @@ Confirm-time re-validation (D-4) and execution (Epic E) consume this proposal se
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from ..alpaca import AlpacaUnavailableError
 from ..alpaca.client import AlpacaClient
 from ..parsing import IntentParser, ParseStatus, SymbolResolver, resolve_basis
@@ -55,16 +57,21 @@ class ProposalService:
         return cls(parser, resolver, alpaca, store)
 
     def propose(self, request_text, *, conversation_id=None, context=None) -> ProposalOutcome:
-        request_id = self._begin(request_text, conversation_id)
+        conversation_id = self._ensure_conversation(conversation_id)
+        request_id = self._record_request(request_text, conversation_id)
+        # Follow-up context (B-4): seed the parser with the conversation's last proposal.
+        if context is None and self._store is not None and conversation_id is not None:
+            context = self._store.latest_proposal_summary(conversation_id)
         try:
-            return self._propose(request_text, request_id, context)
+            outcome = self._propose(request_text, request_id, context)
         except AlpacaUnavailableError:
-            return self._finish(
+            outcome = self._finish(
                 request_id,
                 ProposalStatus.UNAVAILABLE,
                 RequestStatus.FAILED,
                 message="Can't reach Alpaca right now — please try again in a moment.",
             )
+        return replace(outcome, conversation_id=conversation_id)
 
     # --- pipeline ------------------------------------------------------------
 
@@ -138,11 +145,16 @@ class ProposalService:
 
     # --- persistence (D20) ---------------------------------------------------
 
-    def _begin(self, request_text, conversation_id) -> str | None:
-        if self._store is None:
+    def _ensure_conversation(self, conversation_id) -> str | None:
+        if conversation_id is not None:
+            return conversation_id
+        if self._store is not None:
+            return self._store.start_conversation(self._store.create_session())
+        return None
+
+    def _record_request(self, request_text, conversation_id) -> str | None:
+        if self._store is None or conversation_id is None:
             return None
-        if conversation_id is None:
-            conversation_id = self._store.start_conversation(self._store.create_session())
         return self._store.record_request(conversation_id, request_text)
 
     def _persist_llm(self, request_id, purpose, result) -> None:

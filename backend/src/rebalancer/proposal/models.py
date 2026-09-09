@@ -43,3 +43,4 @@ class ProposalOutcome:
     message: str | None = None  # clarify question / refusal / error text
     problems: tuple[str, ...] = field(default_factory=tuple)  # validation reject reasons
     request_id: str | None = None  # audit-trail link when persisted
+    conversation_id: str | None = None  # send back to continue the conversation (B-4)
