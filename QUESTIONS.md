@@ -56,16 +56,24 @@ inline or in chat; I'll adjust and re-commit.
   `request_id` rather than keeping server-side session state. Simple for a single-user local
   app, but the proposal must have been persisted (store required). **OK?**
 
-## Not yet built (need you, or lower priority)
+## What's left (these genuinely want your input)
 
-- **F-1 full audit record** — the rich intent, allocation, and validation results aren't
-  persisted yet (only request / LLM calls / proposal legs / executions). Straightforward to
-  extend; wanted your call on how much to store vs. the lean tables.
-- **F-2 viewable audit log** — a read API + UI over the trail. Backend read is easy; the view
-  is part of the frontend.
-- **Epic G — frontend (React/Vite SPA).** The whole UI is a real design surface (layout, the
-  confirm screen, how the proposal + current-vs-target are shown). I scaffolded nothing yet —
-  this is the biggest "let's design it together" piece. Want me to scaffold G-1 (skeleton) and
-  propose a UI, or wait for you?
-- **H-1 CI** (GitHub Actions running uv + pytest) and **H-4 Playwright e2e** — mechanical;
-  H-4 needs the frontend.
+The backend is **complete end-to-end** (Epics A–E, HTTP API, F-2 read API, H-1 CI, all
+green — 160 fast tests). What remains needs a real decision from you:
+
+- **Epic G — frontend (React/Vite SPA).** The whole UI is a design surface: the type-a-request
+  box, the **confirm screen** (how the restatement + orders + current-vs-target + warnings are
+  laid out), the result view, and the audit-log view (F-2). This is the big "let's design it
+  together" piece — the API it codes against is done (`/api/propose`, `/api/confirm`,
+  `/api/requests`). **Want me to scaffold G-1 (Vite skeleton) and propose a UI, or design it
+  with you first?**
+- **F-1 — full audit record.** Right now I persist request / LLM prompt+response / proposal
+  (summary + legs) / executions. The **rich interpreted intent** (operations + constraints),
+  **resolved basis**, **mapping details**, and **validation results** aren't persisted yet.
+  You had strong views on schema design (D49 — normalize, no JSON blobs), so I didn't guess:
+  **how much of this do you want as new normalized tables vs. left at the lean level?**
+- **H-4 — Playwright e2e** — needs the frontend first (drives the real UI through
+  request → proposal → confirm → result against the paper account).
+
+Everything above the line was built with a flagged default; everything here I'm leaving for
+you on purpose.
