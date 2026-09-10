@@ -106,6 +106,13 @@ button.confirm:hover { background: var(--green2); border-color: var(--green2); }
 button.confirm-cancel { background: transparent; color: var(--down); border-color: #4a2427; }
 button.confirm-cancel:hover { background: var(--down); color: #150606; border-color: var(--down); }
 
+button.ghost {
+  background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 8px;
+  padding: 10px 18px; font: inherit; font-size: 0.82rem; cursor: pointer; transition: 0.14s;
+}
+button.ghost:hover { color: var(--text); border-color: var(--green); }
+button.ghost:disabled { opacity: 0.55; cursor: default; }
+
 /* --- history --- */
 .history h2 { font-size: 0.95rem; color: var(--text); }
 .request-list { list-style: none; padding: 0; }
