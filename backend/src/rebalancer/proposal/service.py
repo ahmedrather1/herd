@@ -129,6 +129,11 @@ class ProposalService:
             return self._finish(request_id, ProposalStatus.REFUSE, RequestStatus.REFUSED, message=plan_result.refusal)
         plan = plan_result.plan
 
+        # Don't show an empty proposal when an operation couldn't be sized — ask instead.
+        unsized = [n for n in plan.notes if n.startswith("Couldn't size")]
+        if not plan.orders and unsized:
+            return self._finish(request_id, ProposalStatus.CLARIFY, RequestStatus.RECEIVED, message=unsized[0])
+
         validation = OrderValidator(self._alpaca).validate(plan)
         if not validation.ok:
             problems = tuple(p.reason for p in validation.problems)

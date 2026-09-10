@@ -112,7 +112,15 @@ export default function App() {
               {error}
             </p>
           )}
-          {outcome && <ProposalView outcome={outcome} onConfirm={onConfirm} onCancel={onCancel} busy={busy} />}
+          {outcome && (
+            <ProposalView
+              outcome={outcome}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+              onBack={() => setOutcome(null)}
+              busy={busy}
+            />
+          )}
           {result && (
             <ResultView
               result={result}

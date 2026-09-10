@@ -6,13 +6,20 @@ export function ProposalView({
   outcome,
   onConfirm,
   onCancel,
+  onBack,
   busy,
 }: {
   outcome: ProposeResponse;
   onConfirm: () => void;
   onCancel: () => void;
+  onBack: () => void;
   busy: boolean;
 }) {
+  const back = (
+    <button className="ghost" onClick={onBack} disabled={busy}>
+      Back
+    </button>
+  );
   if (outcome.status === "cancel") {
     const orders = outcome.open_orders;
     if (orders.length === 0) {
@@ -49,6 +56,7 @@ export function ProposalView({
           <button className="confirm-cancel" onClick={onCancel} disabled={busy}>
             {busy ? <span className="spinner on-danger" /> : "Cancel these orders"}
           </button>
+          {back}
         </div>
       </section>
     );
@@ -59,6 +67,7 @@ export function ProposalView({
       <section className="panel clarify" role="status">
         <h2>One question first</h2>
         <p>{outcome.message}</p>
+        <div className="confirm">{back}</div>
       </section>
     );
   }
@@ -75,6 +84,7 @@ export function ProposalView({
             ))}
           </ul>
         )}
+        <div className="confirm">{back}</div>
       </section>
     );
   }
@@ -143,9 +153,12 @@ export function ProposalView({
         <p className="constraints">Constraints: {outcome.applied_constraints.join("; ")}</p>
       )}
 
-      <button className="confirm" onClick={onConfirm} disabled={busy}>
-        {busy ? <span className="spinner on-solid" /> : "Confirm & place orders"}
-      </button>
+      <div className="confirm">
+        <button className="confirm" onClick={onConfirm} disabled={busy}>
+          {busy ? <span className="spinner on-solid" /> : "Confirm & place orders"}
+        </button>
+        {back}
+      </div>
     </section>
   );
 }

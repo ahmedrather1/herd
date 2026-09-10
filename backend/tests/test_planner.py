@@ -195,6 +195,23 @@ def test_absolute_cash_sell_splits_proportional_to_holdings():
     assert total <= Decimal("3000")
 
 
+def test_buy_with_all_cash_uses_the_cash_balance():
+    alpaca = FakeAlpacaClient(equity="100000", cash="99877.23")
+    op = Operation(action="buy", target="NVDA", amount=Amount(value=None, basis=AmountBasis.ALL_CASH))
+    plan = _plan(alpaca, [op], [_map("NVDA", "buy", "NVDA")])
+    (order,) = plan.orders
+    assert order.symbol == "NVDA" and order.side is OrderSide.BUY
+    assert order.notional == Decimal("99877.23")
+
+
+def test_unsized_operation_is_noted():
+    alpaca = FakeAlpacaClient(equity="10000")
+    op = Operation(action="buy", target="VTI", amount=Amount(value=None, basis=AmountBasis.ABSOLUTE_CASH))
+    plan = _plan(alpaca, [op], [_map("VTI", "buy", "VTI")])
+    assert plan.orders == ()
+    assert any("Couldn't size" in n for n in plan.notes)
+
+
 def test_shares_basis_uses_qty():
     alpaca = FakeAlpacaClient(equity="10000")
     plan = _plan(

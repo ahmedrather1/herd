@@ -36,6 +36,7 @@ class AmountBasis(str, Enum):
     PERCENT_SOURCE_POSITION = "percent_source_position"  # "half my tech" (default if vague)
     ABSOLUTE_CASH = "absolute_cash"  # "$5,000"
     SHARES = "shares"  # "10 shares"
+    ALL_CASH = "all_cash"  # "all my available cash", "everything I have", "max"
 
 
 ActionType = Literal["buy", "sell", "set_allocation"]

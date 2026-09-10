@@ -67,6 +67,7 @@ class Planner:
         cash floor / set-aside holdings, C-2); ``protected`` symbols are never sold.
         """
         equity = investable_equity if investable_equity is not None else account.equity
+        cash = account.cash
         protected = frozenset(s.upper() for s in protected)
         by_key = {(m.target.strip().lower(), m.action): m for m in mappings}
 
@@ -112,7 +113,13 @@ class Planner:
             if not symbols:
                 notes.append(f"no symbols mapped for {op.target!r}; skipped")
                 continue
-            for order in self._plan_operation(op, symbols, positions, equity):
+            op_orders = self._plan_operation(op, symbols, positions, equity, cash)
+            if not op_orders and op.amount is not None:
+                notes.append(
+                    f"Couldn't size the {op.action} for {op.target} — please give an amount "
+                    "(a %, a dollar figure, a share count, or 'all my cash')."
+                )
+            for order in op_orders:
                 if order.side is OrderSide.SELL and order.symbol.upper() in protected:
                     continue  # constraint: never sell a protected symbol (C-2)
                 (sells if order.side is OrderSide.SELL else buys).append(order)
@@ -161,13 +168,16 @@ class Planner:
     # --- individual operations -----------------------------------------------
 
     def _plan_operation(
-        self, op: Operation, symbols: list[str], positions: dict[str, Position], equity: Decimal
+        self, op: Operation, symbols: list[str], positions: dict[str, Position], equity: Decimal, cash: Decimal
     ) -> list[PlannedOrder]:
         amount = op.amount
         if amount is None:
             return self._plan_whole_position(op, symbols, positions)
 
         basis = amount.basis
+        if basis is AmountBasis.ALL_CASH:  # "buy X with all my cash" — no value needed
+            return self._plan_all_cash(op, symbols, cash)
+
         value = amount.value
         if value is None:
             return []
@@ -245,6 +255,17 @@ class Planner:
                 if per > 0:
                     out.append(PlannedOrder(sym.upper(), OrderSide.BUY, f"buy ${per} of {sym}", notional=per))
         return out
+
+    def _plan_all_cash(self, op, symbols, cash) -> list[PlannedOrder]:
+        # "buy X with all my available cash" — spend the whole cash balance, split evenly.
+        if op.action == "sell" or not symbols or cash <= 0:
+            return []
+        per = _money(cash / len(symbols))
+        return [
+            PlannedOrder(sym.upper(), OrderSide.BUY, f"buy {sym} with available cash", notional=per)
+            for sym in symbols
+            if per > 0
+        ]
 
     def _plan_shares(self, op, symbols, value) -> list[PlannedOrder]:
         side = OrderSide.SELL if op.action == "sell" else OrderSide.BUY

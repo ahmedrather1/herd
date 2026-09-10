@@ -124,6 +124,19 @@ def test_constraint_refusal_becomes_refuse():
     assert outcome.status is ProposalStatus.REFUSE and "new deposits" in outcome.message
 
 
+def test_unsized_operation_routes_to_clarify():
+    alpaca = FakeAlpacaClient(equity="10000", buying_power="10000")
+    parse = make_response(
+        WireParsedIntent(
+            status=ParseStatus.PARSED, confidence=0.9, summary="buy some VTI",
+            intent=WireIntent(operations=[WireOperation(action="buy", target="VTI", amount=WireAmount(value=None, basis="absolute_cash"))]),
+        )
+    )
+    outcome = _service(alpaca, parse).propose("buy some VTI")
+    assert outcome.status is ProposalStatus.CLARIFY
+    assert "Couldn't size" in outcome.message
+
+
 def test_validation_refusal_lists_problems():
     alpaca = FakeAlpacaClient(equity="1000", buying_power="1000")
     service = _service(alpaca, _parse(operations=[_op("buy", "VTI", 5000, "absolute_cash")]))

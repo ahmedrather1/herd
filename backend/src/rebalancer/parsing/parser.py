@@ -65,6 +65,9 @@ When status is "parsed", fill `intent`:
                                is vague about what it is a percentage of)
   - "absolute_cash"            e.g. "$5,000" → 5000
   - "shares"                   e.g. "10 shares"
+  - "all_cash"                 e.g. "all my cash", "my entire cash balance", "everything I
+                               have", "max" → leave `value` empty; the app uses the whole
+                               available cash balance
 - `amount.value` is a STRING number (e.g. "60", "5000", "0.5"); omit it only if there is
   truly no number. `amount.raw_phrase` is the original words.
 - `amount.basis_explicit`: true if the user stated what the number is measured against
