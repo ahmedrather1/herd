@@ -61,12 +61,11 @@ inline or in chat; I'll adjust and re-commit.
 The backend is **complete end-to-end** (Epics A–E, HTTP API, F-2 read API, H-1 CI, all
 green — 160 fast tests). What remains needs a real decision from you:
 
-- **Epic G — frontend (React/Vite SPA).** The whole UI is a design surface: the type-a-request
-  box, the **confirm screen** (how the restatement + orders + current-vs-target + warnings are
-  laid out), the result view, and the audit-log view (F-2). This is the big "let's design it
-  together" piece — the API it codes against is done (`/api/propose`, `/api/confirm`,
-  `/api/requests`). **Want me to scaffold G-1 (Vite skeleton) and propose a UI, or design it
-  with you first?**
+- **Epic G — frontend (React/Vite SPA).** ✅ Scaffolded + first-pass UI built (D61):
+  `frontend/` with the propose→confirm flow, all outcome states, and a history tab. Functional
+  styling only (per the ticket). **This is a first pass to react to** — run `npm run dev` (with
+  the backend up) and tell me what to change: layout, wording, the confirm screen, the history
+  detail view (currently raw JSON), visual polish, etc. That's the natural next "together" step.
 - ~~**F-1 — full audit record.**~~ ✅ Done (D60) — you chose full normalized tables. Intent
   operations + constraints, mapping, allocation snapshot, and validation reasons are now
   persisted and exposed at `GET /api/requests/{id}`.

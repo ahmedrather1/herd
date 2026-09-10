@@ -54,6 +54,17 @@ Required `.env` keys (paper credentials only — see [`backend/.env.example`](ba
 | `ALPACA_SECRET` | Alpaca **paper** API secret |
 | `ANTHROPIC_API_KEY` | Anthropic API key for the Claude parser (D14) |
 
+## Setup (frontend, Epic G)
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173  (proxies /api → the backend on :8000)
+```
+
+Run the backend too, then open the dev URL: type a request → **Propose** → review the
+proposal → **Confirm & place orders**. See [`frontend/README.md`](frontend/README.md).
+
 ## Tests
 
 ```bash

@@ -411,12 +411,19 @@ proposal (restatement + basis + mapping + orders + current-vs-target), confirm t
 - Confirmation is an explicit user action (D1, D4); market-closed and re-validation states are shown (D3/D-3, D-4).
 - Conversational follow-ups can be issued in the same session (B-4).
 **Non-goals.** No auth, multi-user, hosting, or styling beyond functional. No mobile.
+- **Landed** (2026-09-09, D61): `frontend/` Vite+React+TS SPA. Request → propose → proposal
+  view (restatement/orders/current-vs-target/warnings) → explicit Confirm → result view;
+  clarify/refuse/unavailable/market-closed/re-validate rendered; follow-ups reuse
+  `conversation_id` (B-4). Vitest+RTL flow tests; `npm run build` type-clean.
 
 ### G-2 · History view in UI
 **Description.** Surface the viewable audit log (F-2) in the web UI.
 **Acceptance criteria.**
 - User can browse past requests/proposals/executions from the UI.
 **Non-goals.** No undo controls (D22). No export tooling in v1.
+- **Landed** (2026-09-09, with D61): History tab — lists `GET /api/requests` and opens the full
+  record via `GET /api/requests/{id}`. Detail is shown as the raw record for now (a friendlier
+  layout is a possible polish item).
 
 ---
 
