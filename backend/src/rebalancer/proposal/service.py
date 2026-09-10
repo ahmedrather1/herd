@@ -107,6 +107,7 @@ class ProposalService:
                 message=resolution.needs_clarification,
             )
         intent = resolution.intent
+        self._persist_intent(request_id, intent)
 
         mapping = self._resolver.resolve(intent)
         self._persist_llm(request_id, "category_map", mapping)
@@ -114,6 +115,7 @@ class ProposalService:
             if mapping.error is not None:
                 return self._finish(request_id, ProposalStatus.ERROR, RequestStatus.FAILED, message=mapping.error)
             return self._finish(request_id, ProposalStatus.REFUSE, RequestStatus.REFUSED, message=mapping.refusal)
+        self._persist_mappings(request_id, mapping.mappings)
 
         plan_result = ConstraintSolver(self._alpaca).solve(intent, mapping.mappings)
         if not plan_result.ok:
@@ -122,10 +124,12 @@ class ProposalService:
 
         validation = OrderValidator(self._alpaca).validate(plan)
         if not validation.ok:
+            problems = tuple(p.reason for p in validation.problems)
+            self._persist_validation_problems(request_id, problems)
             return self._finish(
                 request_id, ProposalStatus.REFUSE, RequestStatus.REFUSED,
                 message="The proposed orders aren't valid as-is — adjust the request:",
-                problems=tuple(p.reason for p in validation.problems),
+                problems=problems,
             )
 
         allocation = compute_allocation(plan, self._alpaca)
@@ -168,6 +172,18 @@ class ProposalService:
             prompt=raw_prompt, response=getattr(result, "raw_response", None) or "",
         )
 
+    def _persist_intent(self, request_id, intent) -> None:
+        if self._store is not None and request_id is not None:
+            self._store.record_intent(request_id, intent)
+
+    def _persist_mappings(self, request_id, mappings) -> None:
+        if self._store is not None and request_id is not None:
+            self._store.record_mappings(request_id, mappings)
+
+    def _persist_validation_problems(self, request_id, reasons) -> None:
+        if self._store is not None and request_id is not None:
+            self._store.record_validation_problems(request_id, reasons)
+
     def _persist_proposal(self, request_id, proposal: Proposal) -> None:
         if self._store is None or request_id is None:
             return
@@ -177,7 +193,8 @@ class ProposalService:
             )
             for i, o in enumerate(proposal.orders)
         ]
-        self._store.record_proposal(request_id, summary=proposal.restatement, legs=legs)
+        proposal_id = self._store.record_proposal(request_id, summary=proposal.restatement, legs=legs)
+        self._store.record_allocation(proposal_id, proposal.allocation)
 
     def _finish(self, request_id, status, request_status, *, proposal=None, message=None, problems=()):
         if self._store is not None and request_id is not None:

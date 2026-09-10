@@ -16,16 +16,26 @@ from sqlmodel import select
 
 from .db import session_scope
 from .models import (
+    AllocationSnapshot,
     AppSession,
     Conversation,
     Intent,
+    IntentConstraint,
+    IntentOperation,
     LlmCall,
+    Mapping,
+    MappedSymbol,
     OrderExecution,
     Proposal,
     ProposedOrder,
     Request,
     RequestStatus,
+    ValidationProblem,
 )
+
+
+def _enum(value):
+    return value.value if hasattr(value, "value") else value
 
 
 class ProposedLeg:
@@ -106,26 +116,70 @@ class AuditStore:
             s.flush()
             return row.id
 
-    def record_intent(
-        self,
-        request_id: str,
-        *,
-        action: str,
-        amount: Decimal | None = None,
-        amount_basis: str | None = None,
-        notes: str | None = None,
-    ) -> str:
+    def record_intent(self, request_id: str, intent) -> str:
+        """Persist a full interpreted intent — operations + constraints (F-1, D49).
+
+        ``intent`` is duck-typed to the parsing ``Intent`` (``.operations`` with ``.action`` /
+        ``.target`` / ``.amount``; ``.constraints`` with ``.kind`` / ``.target`` / ``.value``).
+        """
         with session_scope(self._engine) as s:
-            row = Intent(
-                request_id=request_id,
-                action=action,
-                amount=amount,
-                amount_basis=amount_basis,
-                notes=notes,
-            )
+            row = Intent(request_id=request_id)
             s.add(row)
             s.flush()
+            for i, op in enumerate(intent.operations):
+                amount = op.amount
+                s.add(
+                    IntentOperation(
+                        intent_id=row.id,
+                        sequence_index=i,
+                        action=op.action,
+                        target=op.target,
+                        amount_value=amount.value if amount else None,
+                        amount_basis=_enum(amount.basis) if amount else None,
+                        amount_raw_phrase=amount.raw_phrase if amount else None,
+                        basis_explicit=amount.basis_explicit if amount else True,
+                        basis_defaulted=amount.basis_defaulted if amount else False,
+                    )
+                )
+            for c in intent.constraints:
+                s.add(
+                    IntentConstraint(
+                        intent_id=row.id, kind=c.kind, target=c.target, value=c.value, raw_phrase=c.raw_phrase
+                    )
+                )
             return row.id
+
+    def record_mappings(self, request_id: str, mappings) -> None:
+        """Persist resolved category→symbol mappings (B-3/D5, F-1)."""
+        with session_scope(self._engine) as s:
+            for m in mappings:
+                row = Mapping(request_id=request_id, target=m.target, action=m.action, source=m.source, note=m.note or None)
+                s.add(row)
+                s.flush()
+                for symbol in m.symbols:
+                    s.add(MappedSymbol(mapping_id=row.id, symbol=symbol))
+
+    def record_allocation(self, proposal_id: str, report) -> None:
+        """Persist the current-vs-target snapshot shown with a proposal (C-3/D24, F-1)."""
+        with session_scope(self._engine) as s:
+            for r in report.rows:
+                s.add(
+                    AllocationSnapshot(
+                        proposal_id=proposal_id,
+                        symbol=r.symbol,
+                        current_value=r.current_value,
+                        current_pct=r.current_pct,
+                        target_value=r.target_value,
+                        target_pct=r.target_pct,
+                        delta_value=r.delta_value,
+                    )
+                )
+
+    def record_validation_problems(self, request_id: str, reasons) -> None:
+        """Persist the reasons a request's orders were rejected (D-2/D18, F-1)."""
+        with session_scope(self._engine) as s:
+            for reason in reasons:
+                s.add(ValidationProblem(request_id=request_id, reason=reason))
 
     def record_proposal(
         self, request_id: str, *, summary: str | None = None, legs: list[ProposedLeg] = ()
@@ -184,9 +238,13 @@ class AuditStore:
                 .where(Request.id == request_id)
                 .options(
                     selectinload(Request.llm_calls),
-                    selectinload(Request.intents),
+                    selectinload(Request.intents).selectinload(Intent.operations),
+                    selectinload(Request.intents).selectinload(Intent.constraints),
+                    selectinload(Request.mappings).selectinload(Mapping.symbols),
                     selectinload(Request.proposals).selectinload(Proposal.legs),
+                    selectinload(Request.proposals).selectinload(Proposal.allocation_rows),
                     selectinload(Request.executions),
+                    selectinload(Request.validation_problems),
                 )
             )
             row = s.exec(stmt).one_or_none()

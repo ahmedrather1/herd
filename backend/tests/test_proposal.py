@@ -202,3 +202,9 @@ def test_proposal_is_persisted(tmp_path):
     assert request.status is RequestStatus.PROPOSED
     assert {c.purpose for c in request.llm_calls} == {"parse", "category_map"}
     assert len(request.proposals) == 1 and len(request.proposals[0].legs) == 1
+    # Full normalized record (F-1): intent operations, mapping symbols, allocation snapshot.
+    assert request.intents[0].operations[0].action == "buy"
+    assert request.intents[0].operations[0].amount_basis == "percent_portfolio"
+    mapping = request.mappings[0]
+    assert mapping.target == "bonds" and [s.symbol for s in mapping.symbols] == ["BND"]
+    assert any(row.symbol == "BND" for row in request.proposals[0].allocation_rows)

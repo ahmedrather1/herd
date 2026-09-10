@@ -380,6 +380,12 @@ failure and its reason, and cash left over.
 - For each request: raw text, LLM prompt+response, interpreted intent, resolved basis + mapping, proposal, validation results, submitted orders, Alpaca responses, timestamps.
 - Records are linked into their conversation/session (B-4, A-3).
 **Non-goals.** No redaction/retention tooling in v1 (bounded by self-host, D12).
+- **Landed** (2026-09-08, D60): normalized tables for the full record — `Intent → IntentOperation`
+  + `IntentConstraint`, `Mapping → MappedSymbol`, `AllocationSnapshot` (per proposal),
+  `ValidationProblem` (per request). Replaces the lean `Intent` first-cut (D49; recreate, no
+  migration). `ProposalService` persists intent + mappings + allocation + validation problems;
+  `get_request` eager-loads them; `GET /api/requests/{id}` returns the full record. Tests in
+  `test_store.py`, `test_proposal.py`, `test_api.py`.
 
 > **Read-API landed** (2026-09-08): `GET /api/requests` (recent, newest-first) and
 > `GET /api/requests/{id}` (full record: raw text, LLM prompt+response, proposal legs,

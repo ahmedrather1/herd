@@ -67,11 +67,9 @@ green — 160 fast tests). What remains needs a real decision from you:
   together" piece — the API it codes against is done (`/api/propose`, `/api/confirm`,
   `/api/requests`). **Want me to scaffold G-1 (Vite skeleton) and propose a UI, or design it
   with you first?**
-- **F-1 — full audit record.** Right now I persist request / LLM prompt+response / proposal
-  (summary + legs) / executions. The **rich interpreted intent** (operations + constraints),
-  **resolved basis**, **mapping details**, and **validation results** aren't persisted yet.
-  You had strong views on schema design (D49 — normalize, no JSON blobs), so I didn't guess:
-  **how much of this do you want as new normalized tables vs. left at the lean level?**
+- ~~**F-1 — full audit record.**~~ ✅ Done (D60) — you chose full normalized tables. Intent
+  operations + constraints, mapping, allocation snapshot, and validation reasons are now
+  persisted and exposed at `GET /api/requests/{id}`.
 - **H-4 — Playwright e2e** — needs the frontend first (drives the real UI through
   request → proposal → confirm → result against the paper account).
 

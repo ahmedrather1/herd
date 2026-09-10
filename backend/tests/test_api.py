@@ -111,6 +111,10 @@ def test_audit_history_endpoints(client):
     assert {c["purpose"] for c in detail["llm_calls"]} == {"parse", "category_map"}
     assert detail["proposals"][0]["legs"][0]["symbol"] == "BND"
     assert detail["executions"][0]["status"] == "accepted"
+    # Full record (F-1): intent operations, mapping, allocation snapshot.
+    assert detail["intent"]["operations"][0]["target"] == "bonds"
+    assert detail["mappings"][0]["symbols"] == ["BND"]
+    assert any(row["symbol"] == "BND" for row in detail["proposals"][0]["allocation"])
 
 
 def test_get_unknown_request_is_404(client):

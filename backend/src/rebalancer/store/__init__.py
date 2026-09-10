@@ -16,15 +16,21 @@ from .db import (
     session_scope,
 )
 from .models import (
+    AllocationSnapshot,
     AppSession,
     Conversation,
     Intent,
+    IntentConstraint,
+    IntentOperation,
     LlmCall,
+    Mapping,
+    MappedSymbol,
     OrderExecution,
     Proposal,
     ProposedOrder,
     Request,
     RequestStatus,
+    ValidationProblem,
 )
 
 __all__ = [
@@ -39,6 +45,12 @@ __all__ = [
     "AppSession",
     "Conversation",
     "Intent",
+    "IntentOperation",
+    "IntentConstraint",
+    "Mapping",
+    "MappedSymbol",
+    "AllocationSnapshot",
+    "ValidationProblem",
     "LlmCall",
     "OrderExecution",
     "Proposal",

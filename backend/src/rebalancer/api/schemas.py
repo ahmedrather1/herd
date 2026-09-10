@@ -150,6 +150,33 @@ class StoredProposalSchema(BaseModel):
     summary: str | None = None
     created_at: str
     legs: list[ProposalLegSchema] = []
+    allocation: list[AllocationRowSchema] = []
+
+
+class IntentOperationSchema(BaseModel):
+    action: str
+    target: str
+    amount_value: str | None = None
+    amount_basis: str | None = None
+    basis_defaulted: bool = False
+
+
+class IntentConstraintSchema(BaseModel):
+    kind: str
+    target: str | None = None
+    value: str | None = None
+
+
+class StoredIntentSchema(BaseModel):
+    operations: list[IntentOperationSchema] = []
+    constraints: list[IntentConstraintSchema] = []
+
+
+class StoredMappingSchema(BaseModel):
+    target: str
+    action: str
+    source: str
+    symbols: list[str] = []
 
 
 class ExecutionSchema(BaseModel):
@@ -163,9 +190,12 @@ class ExecutionSchema(BaseModel):
 
 
 class RequestDetailSchema(RequestSummarySchema):
+    intent: StoredIntentSchema | None = None
+    mappings: list[StoredMappingSchema] = []
     llm_calls: list[LlmCallSchema] = []
     proposals: list[StoredProposalSchema] = []
     executions: list[ExecutionSchema] = []
+    validation_problems: list[str] = []
 
 
 def _iso(dt) -> str:
@@ -181,9 +211,33 @@ def request_to_summary(request) -> RequestSummarySchema:
     )
 
 
+def _intent_to_schema(request) -> StoredIntentSchema | None:
+    if not request.intents:
+        return None
+    intent = request.intents[-1]
+    return StoredIntentSchema(
+        operations=[
+            IntentOperationSchema(
+                action=op.action, target=op.target, amount_value=_s(op.amount_value),
+                amount_basis=op.amount_basis, basis_defaulted=op.basis_defaulted,
+            )
+            for op in sorted(intent.operations, key=lambda o: o.sequence_index)
+        ],
+        constraints=[
+            IntentConstraintSchema(kind=c.kind, target=c.target, value=_s(c.value)) for c in intent.constraints
+        ],
+    )
+
+
 def request_to_detail(request) -> RequestDetailSchema:
     return RequestDetailSchema(
         **request_to_summary(request).model_dump(),
+        intent=_intent_to_schema(request),
+        mappings=[
+            StoredMappingSchema(target=m.target, action=m.action, source=m.source, symbols=[s.symbol for s in m.symbols])
+            for m in request.mappings
+        ],
+        validation_problems=[vp.reason for vp in request.validation_problems],
         llm_calls=[
             LlmCallSchema(purpose=c.purpose, model=c.model, prompt=c.prompt, response=c.response, created_at=_iso(c.created_at))
             for c in request.llm_calls
@@ -195,6 +249,13 @@ def request_to_detail(request) -> RequestDetailSchema:
                 legs=[
                     ProposalLegSchema(symbol=leg.symbol, side=leg.side, sequence_index=leg.sequence_index, qty=_s(leg.qty), notional=_s(leg.notional))
                     for leg in sorted(p.legs, key=lambda leg: leg.sequence_index)
+                ],
+                allocation=[
+                    AllocationRowSchema(
+                        symbol=a.symbol, current_value=str(a.current_value), current_pct=str(a.current_pct),
+                        target_value=str(a.target_value), target_pct=str(a.target_pct), delta_value=str(a.delta_value),
+                    )
+                    for a in p.allocation_rows
                 ],
             )
             for p in request.proposals

@@ -12,6 +12,12 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import text
 
+from rebalancer.parsing import Amount, AmountBasis, Intent, Operation
+
+
+def _intent(action, target, value, basis):
+    return Intent(operations=[Operation(action=action, target=target, amount=Amount(value=Decimal(value), basis=basis))])
+
 from rebalancer.store import (
     AuditStore,
     ProposedLeg,
@@ -48,9 +54,7 @@ def test_full_graph_round_trips(store):
     store.record_llm_call(
         request_id, purpose="parse", model="claude", prompt="P", response="R"
     )
-    store.record_intent(
-        request_id, action="rebalance", amount=Decimal("60"), amount_basis="portfolio"
-    )
+    store.record_intent(request_id, _intent("set_allocation", "stocks", "60", AmountBasis.TARGET_WEIGHT))
     store.record_proposal(
         request_id,
         summary="sell BND, buy VTI",
@@ -68,7 +72,7 @@ def test_full_graph_round_trips(store):
     assert req is not None
     assert req.raw_text == "rebalance to 60/40"
     assert len(req.llm_calls) == 1 and req.llm_calls[0].purpose == "parse"
-    assert req.intents[0].amount == Decimal("60")
+    assert req.intents[0].operations[0].amount_value == Decimal("60")
     assert len(req.proposals) == 1
     legs = sorted(req.proposals[0].legs, key=lambda leg: leg.sequence_index)
     assert [leg.symbol for leg in legs] == ["BND", "VTI"]
@@ -85,8 +89,8 @@ def test_get_missing_request_returns_none(store):
 
 def test_decimal_returns_as_decimal_not_float(store):
     request_id = _seed_request(store)
-    store.record_intent(request_id, action="buy", amount=Decimal("10.005"))
-    amount = store.get_request(request_id).intents[0].amount
+    store.record_intent(request_id, _intent("buy", "AAPL", "10.005", AmountBasis.SHARES))
+    amount = store.get_request(request_id).intents[0].operations[0].amount_value
     assert isinstance(amount, Decimal)
     assert amount == Decimal("10.005")
 
@@ -94,10 +98,10 @@ def test_decimal_returns_as_decimal_not_float(store):
 def test_money_column_is_stored_as_text(engine, store):
     # A value 0.1 + 0.2 would misbehave as a float; confirm the DB keeps exact TEXT.
     request_id = _seed_request(store)
-    store.record_intent(request_id, action="buy", amount=Decimal("0.30"))
+    store.record_intent(request_id, _intent("buy", "VTI", "0.30", AmountBasis.ABSOLUTE_CASH))
     with session_scope(engine) as s:
-        typ = s.exec(text("SELECT typeof(amount) FROM intent")).one()[0]
-        raw = s.exec(text("SELECT amount FROM intent")).one()[0]
+        typ = s.exec(text("SELECT typeof(amount_value) FROM intent_operation")).one()[0]
+        raw = s.exec(text("SELECT amount_value FROM intent_operation")).one()[0]
     assert typ == "text"
     assert raw == "0.30"  # exact string, trailing zero preserved
 
