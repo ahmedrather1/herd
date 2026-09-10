@@ -105,6 +105,9 @@ class Planner:
             if id(op) in handled:
                 continue
             mapping = by_key.get((op.target.strip().lower(), op.action))
+            if mapping is not None and mapping.source == "cash":
+                notes.append(f"{op.target} left as cash.")  # residual — not bought
+                continue
             symbols = list(mapping.symbols) if mapping else []
             if not symbols:
                 notes.append(f"no symbols mapped for {op.target!r}; skipped")
@@ -122,6 +125,9 @@ class Planner:
         targets: dict[str, Decimal] = {}
         for op, weight in alloc:
             mapping = by_key.get((op.target.strip().lower(), op.action))
+            if mapping is not None and mapping.source == "cash":
+                notes.append(f"{weight}% left as cash.")  # residual — not bought
+                continue
             symbols = list(mapping.symbols) if mapping else []
             if not symbols:
                 notes.append(f"no symbols mapped for {op.target!r}; skipped")

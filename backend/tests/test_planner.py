@@ -85,6 +85,25 @@ def test_rebalance_fills_the_remaining_bucket():
     assert orders["GLD"].notional == Decimal("30000")  # the remaining 30% — no longer dropped
 
 
+def test_rebalance_leaves_cash_bucket_uninvested():
+    # "90% stocks, 10% cash" — cash is reserved (source="cash"), never bought.
+    alpaca = FakeAlpacaClient(equity="10000")
+    plan = _plan(
+        alpaca,
+        [
+            _op("set_allocation", "stocks", 90, AmountBasis.TARGET_WEIGHT),
+            _op("set_allocation", "cash", 10, AmountBasis.TARGET_WEIGHT),
+        ],
+        [
+            _map("stocks", "set_allocation", "VTI"),
+            SymbolMapping(target="cash", action="set_allocation", symbols=(), source="cash"),
+        ],
+    )
+    orders = _by_symbol(plan)
+    assert orders["VTI"].notional == Decimal("9000")  # 90% bought
+    assert all(o.symbol.upper() != "CASH" for o in plan.orders)  # cash never bought
+
+
 def test_full_rebalance_already_on_target_is_noop():
     alpaca = FakeAlpacaClient(equity="10000")
     alpaca.set_position("VTI", qty="60", price="100")  # $6000 = 60%

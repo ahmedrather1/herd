@@ -72,6 +72,15 @@ def _looks_like_symbol(token: str) -> bool:
     return bool(_SYMBOL_RE.match(token))
 
 
+_CASH_WORDS = {"cash", "money", "cash reserve", "cash reserves", "cash position", "usd", "dollars"}
+
+
+def _is_cash(target: str) -> bool:
+    """A "cash" bucket is literal uninvested cash, never a security (even though CASH is a
+    real ticker). It is reserved, not bought."""
+    return target.strip().lower() in _CASH_WORDS
+
+
 class SymbolResolver:
     """Resolves an intent's category targets to tradable symbols (B-3)."""
 
@@ -102,6 +111,9 @@ class SymbolResolver:
 
         for op in intent.operations:
             target = op.target.strip()
+            if _is_cash(target):  # "cash" is the residual, not a security to buy
+                resolved.append(SymbolMapping(target, op.action, (), "cash", "left uninvested as cash"))
+                continue
             ticker = target.upper()
             if _looks_like_symbol(ticker):
                 asset = self._get_asset(ticker)

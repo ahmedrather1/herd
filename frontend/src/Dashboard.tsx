@@ -13,6 +13,7 @@ export function Dashboard() {
   const [pf, setPf] = useState<Portfolio | null>(null);
   const [error, setError] = useState(false);
   const [hi, setHi] = useState<number | null>(null);
+  const [sel, setSel] = useState<number | null>(null);
 
   useEffect(() => {
     getPortfolio()
@@ -66,13 +67,33 @@ export function Dashboard() {
             </div>
             <div className="legend">
               {holdings.map((h, i) => (
-                <div className="legrow" key={h.symbol} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}>
+                <div
+                  className={`legrow${sel === i ? " selected" : ""}`}
+                  key={h.symbol}
+                  onMouseEnter={() => setHi(i)}
+                  onMouseLeave={() => setHi(null)}
+                  onClick={() => setSel(sel === i ? null : i)}
+                >
                   <span className="dot" style={{ background: h.color }} />
                   <span className="sym">{h.symbol}</span>
                   <span className="pct">{Math.round(Number(h.pct))}%</span>
                   <span className="val">{money(h.value)}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+        {sel != null && holdings[sel] && (
+          <div className="holding-detail">
+            <div className="hd-title">
+              <span className="dot" style={{ background: holdings[sel].color }} />
+              {holdings[sel].symbol}
+            </div>
+            <div className="hd-grid">
+              <div><span>Allocation</span><b>{Number(holdings[sel].pct).toFixed(1)}%</b></div>
+              <div><span>Market value</span><b>{money(holdings[sel].value)}</b></div>
+              {holdings[sel].qty && <div><span>Shares</span><b>{Number(holdings[sel].qty).toLocaleString("en-US", { maximumFractionDigits: 4 })}</b></div>}
+              {holdings[sel].price && <div><span>Price</span><b>${Number(holdings[sel].price).toLocaleString("en-US", { minimumFractionDigits: 2 })}</b></div>}
             </div>
           </div>
         )}

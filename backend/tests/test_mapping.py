@@ -51,6 +51,17 @@ def test_literal_symbol_maps_to_itself_without_llm():
     assert resolver._client.messages.calls == []  # no LLM call for a plain ticker
 
 
+def test_cash_is_reserved_not_mapped_to_a_symbol():
+    # "cash" must never become the CASH stock ticker — it's the residual, no LLM call.
+    alpaca = FakeAlpacaClient(equity="10000")
+    resolver = _resolver(alpaca)  # no LLM responses queued → must not be called
+    result = resolver.resolve(_intent(Operation(action="set_allocation", target="cash")))
+    assert result.ok
+    (m,) = result.mappings
+    assert m.symbols == () and m.source == "cash"
+    assert resolver._client.messages.calls == []
+
+
 def test_untradable_literal_refuses():
     alpaca = FakeAlpacaClient()
     alpaca.set_asset("PINK", tradable=False)

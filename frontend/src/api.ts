@@ -41,6 +41,8 @@ export interface Holding {
   symbol: string;
   value: string;
   pct: string;
+  qty: string | null;
+  price: string | null;
 }
 
 export interface BalancePoint {

@@ -62,6 +62,8 @@ class AllocationHolding(BaseModel):
     symbol: str
     value: str
     pct: str
+    qty: str | None = None
+    price: str | None = None
 
 
 class BalancePointSchema(BaseModel):

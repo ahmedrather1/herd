@@ -86,7 +86,10 @@ def portfolio(alpaca: AlpacaClient = Depends(get_alpaca)) -> PortfolioResponse:
 
     equity = account.equity
     holdings = [
-        AllocationHolding(symbol=p.symbol, value=str(p.market_value), pct=_pct(p.market_value, equity))
+        AllocationHolding(
+            symbol=p.symbol, value=str(p.market_value), pct=_pct(p.market_value, equity),
+            qty=str(p.qty), price=str(p.current_price),
+        )
         for p in positions
     ]
     if account.cash > 0:

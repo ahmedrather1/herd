@@ -1,7 +1,7 @@
 import type { ConfirmResponse } from "./api";
 
 // Renders the execution report (E-2) or a confirm-time block (re-validate / market-closed).
-export function ResultView({ result }: { result: ConfirmResponse }) {
+export function ResultView({ result, onDismiss }: { result: ConfirmResponse; onDismiss: () => void }) {
   const ok = result.status === "completed";
   const canceled = result.status === "canceled";
   const blocked = result.status === "revalidate" || result.status === "market_closed" || result.status === "nothing";
@@ -54,6 +54,12 @@ export function ResultView({ result }: { result: ConfirmResponse }) {
           </tbody>
         </table>
       )}
+
+      <div className="confirm">
+        <button className="confirm" onClick={onDismiss}>
+          Done — new request
+        </button>
+      </div>
     </section>
   );
 }

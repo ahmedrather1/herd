@@ -20,18 +20,15 @@
 
 * { box-sizing: border-box; }
 
-html { scrollbar-gutter: stable both-edges; }
+html { scrollbar-gutter: stable; }
 body {
   margin: 0;
   color: var(--text);
   font: 13.5px/1.55 var(--mono);
   background: radial-gradient(900px 420px at 82% -18%, rgba(52, 211, 153, 0.05), transparent 70%), var(--bg);
-  display: flex;
-  justify-content: center;
-  min-height: 100vh;
 }
 
-.app { width: 100%; max-width: 880px; margin: 0 auto; padding: 26px 22px 60px; }
+.app { max-width: 880px; margin: 0 auto; padding: 26px 22px 60px; }
 
 header { display: flex; align-items: center; gap: 11px; margin-bottom: 22px; }
 header h1 { font-size: 0.98rem; margin: 0; font-weight: 600; color: var(--text); }
@@ -141,8 +138,17 @@ button.confirm-cancel:hover { background: var(--down); color: #150606; border-co
 .donut-mid b { font-size: 1.02rem; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .donut-mid span { color: var(--faint); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
 .legend { display: flex; flex-direction: column; gap: 1px; flex: 1; }
-.legrow { display: flex; align-items: center; gap: 10px; font-size: 0.79rem; padding: 5px 7px; border-radius: 6px; transition: background 0.12s; }
+.legrow { display: flex; align-items: center; gap: 10px; font-size: 0.79rem; padding: 5px 7px; border-radius: 6px; transition: background 0.12s; cursor: pointer; }
 .legrow:hover { background: rgba(52, 211, 153, 0.06); }
+.legrow.selected { background: rgba(52, 211, 153, 0.11); }
+
+.holding-detail { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.hd-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.hd-title .dot { width: 9px; height: 9px; border-radius: 2px; }
+.hd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 18px; }
+.hd-grid > div { display: flex; flex-direction: column; gap: 3px; }
+.hd-grid span { color: var(--faint); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.09em; }
+.hd-grid b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 .legrow .sym { color: var(--text); }
 .legrow .pct { margin-left: auto; font-variant-numeric: tabular-nums; }
