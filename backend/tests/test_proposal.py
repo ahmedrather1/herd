@@ -132,6 +132,19 @@ def test_validation_refusal_lists_problems():
     assert any("buying power" in p for p in outcome.problems)
 
 
+def test_cancel_command_lists_open_orders():
+    from rebalancer.alpaca import OrderRequest, OrderSide
+
+    alpaca = FakeAlpacaClient(equity="10000")
+    alpaca.submit_order(OrderRequest(symbol="VTI", side=OrderSide.BUY, notional=Decimal("500")))
+    cancel_parse = make_response(
+        WireParsedIntent(status=ParseStatus.PARSED, command="cancel", confidence=0.9, summary="cancel pending orders")
+    )
+    outcome = _service(alpaca, cancel_parse).propose("actually, cancel that")
+    assert outcome.status is ProposalStatus.CANCEL
+    assert len(outcome.open_orders) == 1 and outcome.open_orders[0].symbol == "VTI"
+
+
 def test_alpaca_unavailable_becomes_unavailable():
     alpaca = FakeAlpacaClient(equity="10000")
     alpaca.set_unavailable(True)

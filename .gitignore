@@ -46,3 +46,6 @@ playwright/.cache/
 .idea/
 .DS_Store
 *.swp
+
+# design canvas working files (published as an Artifact, not app code)
+design/

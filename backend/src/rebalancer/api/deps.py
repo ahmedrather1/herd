@@ -7,6 +7,7 @@ Endpoints depend on these; tests override them with fakes. The services are sync
 from __future__ import annotations
 
 from ..alpaca import get_alpaca_client
+from ..alpaca.client import AlpacaClient
 from ..config import get_settings
 from ..execution import ExecutionService
 from ..proposal import ProposalService
@@ -15,6 +16,10 @@ from ..store import AuditStore, get_engine
 
 def get_store() -> AuditStore:
     return AuditStore(get_engine())
+
+
+def get_alpaca() -> AlpacaClient:
+    return get_alpaca_client()
 
 
 def get_proposal_service() -> ProposalService:

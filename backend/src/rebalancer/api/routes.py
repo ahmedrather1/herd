@@ -12,17 +12,23 @@ threadpool (D46).
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..alpaca import OrderSide
+from ..alpaca import AlpacaUnavailableError, OrderSide
+from ..alpaca.client import AlpacaClient
 from ..execution import ExecutionService
 from ..planning import Plan, PlannedOrder
 from ..proposal import ProposalService
 from ..store import AuditStore
-from .deps import get_execution_service, get_proposal_service, get_store
+from .deps import get_alpaca, get_execution_service, get_proposal_service, get_store
 from .schemas import (
+    AllocationHolding,
+    BalancePointSchema,
     ConfirmRequest,
     ConfirmResponse,
+    PortfolioResponse,
     ProposeRequest,
     ProposeResponse,
     RequestDetailSchema,
@@ -56,6 +62,52 @@ def confirm(
         raise HTTPException(status_code=404, detail="No proposal found for that request id.")
     report = execution.confirm_and_execute(plan, request_id=body.request_id)
     return report_to_schema(report)
+
+
+@router.post("/cancel", response_model=ConfirmResponse)
+def cancel(
+    body: ConfirmRequest,
+    execution: ExecutionService = Depends(get_execution_service),
+) -> ConfirmResponse:
+    """Cancel all currently-open orders (D62). ``request_id`` links the audit record."""
+    report = execution.cancel_open_orders(request_id=body.request_id)
+    return report_to_schema(report)
+
+
+@router.get("/portfolio", response_model=PortfolioResponse)
+def portfolio(alpaca: AlpacaClient = Depends(get_alpaca)) -> PortfolioResponse:
+    """Current allocation + equity trendline for the dashboard (D24)."""
+    try:
+        account = alpaca.get_account()
+        positions = alpaca.get_positions()
+        history = alpaca.get_balance_history()
+    except AlpacaUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Can't reach Alpaca right now.") from exc
+
+    equity = account.equity
+    holdings = [
+        AllocationHolding(symbol=p.symbol, value=str(p.market_value), pct=_pct(p.market_value, equity))
+        for p in positions
+    ]
+    if account.cash > 0:
+        holdings.append(AllocationHolding(symbol="CASH", value=str(account.cash), pct=_pct(account.cash, equity)))
+    return PortfolioResponse(
+        equity=str(equity),
+        cash=str(account.cash),
+        holdings=holdings,
+        # Drop pre-funding $0 points so the trendline starts where the account has value.
+        balance=[
+            BalancePointSchema(date=pt.as_of.date().isoformat(), equity=str(pt.equity))
+            for pt in history
+            if pt.equity > 0
+        ],
+    )
+
+
+def _pct(value: Decimal, equity: Decimal) -> str:
+    if equity <= 0:
+        return "0.00"
+    return str((value / equity * Decimal("100")).quantize(Decimal("0.01")))
 
 
 @router.get("/requests", response_model=list[RequestSummarySchema])

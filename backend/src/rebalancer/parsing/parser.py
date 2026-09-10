@@ -39,6 +39,10 @@ You convert a single free-form portfolio-rebalancing request into a structured i
 You do NOT place trades, do math, or resolve category words to ticker symbols — you only
 capture what the user means, exactly as stated.
 
+Set `command` to "cancel" when the user wants to CANCEL or scrap their pending/last orders
+(e.g. "cancel that", "never mind", "cancel my last order", "undo that order"); otherwise
+"trade". When `command` is "cancel", still set `status` to "parsed" and leave `intent` empty.
+
 Set `status`:
 - "parsed" when you understand the request well enough to propose against it.
 - "needs_clarification" when it is genuinely ambiguous or you are unsure — put a single
@@ -106,6 +110,7 @@ class WireIntent(BaseModel):
 
 class WireParsedIntent(BaseModel):
     status: ParseStatus
+    command: str = "trade"
     confidence: float
     summary: str
     intent: WireIntent | None = None
@@ -150,6 +155,7 @@ def _to_domain(wire: WireParsedIntent) -> ParsedIntent:
         )
     return ParsedIntent(
         status=wire.status,
+        command=wire.command,
         confidence=wire.confidence,
         summary=wire.summary,
         intent=intent,

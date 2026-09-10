@@ -29,6 +29,7 @@ from rebalancer.alpaca import (
     AlpacaRequestError,
     AlpacaUnavailableError,
     Asset,
+    BalancePoint,
     MarketClock,
     OrderRejectedError,
     OrderRequest,
@@ -91,6 +92,8 @@ class FakeAlpacaClient(AlpacaClient):
         self.attempts: list[OrderRequest] = []          # every submit_order arg
         self.submitted: list[SubmittedOrder] = []        # only the accepted ones
         self._orders_by_id: dict[str, SubmittedOrder] = {}
+        self._canceled: set[str] = set()
+        self._balance_history: list[BalancePoint] = []
         self._next_id = 1
 
     # --- scripting API -------------------------------------------------------
@@ -133,6 +136,12 @@ class FakeAlpacaClient(AlpacaClient):
     def fail_after(self, n: int, reason: str = "Alpaca unavailable") -> None:
         """Accept the next ``n`` orders, then fail — for stop-on-failure (D15)."""
         self.queue_outcomes(*([ACCEPT] * n), Fail(reason))
+
+    def set_balance_history(self, points) -> None:
+        """Script the equity trendline (D62). ``points``: (datetime, equity) pairs."""
+        self._balance_history = [
+            BalancePoint(as_of=dt, equity=Decimal(str(eq))) for dt, eq in points
+        ]
 
     # --- AlpacaClient interface ---------------------------------------------
 
@@ -197,3 +206,17 @@ class FakeAlpacaClient(AlpacaClient):
         if order_id not in self._orders_by_id:
             raise AlpacaRequestError(f"order not found: {order_id}", status_code=404)
         return self._orders_by_id[order_id]
+
+    def get_open_orders(self) -> list[SubmittedOrder]:
+        self._guard_available()
+        return [o for o in self.submitted if o.id not in self._canceled]
+
+    def cancel_order(self, order_id: str) -> None:
+        self._guard_available()
+        if order_id not in self._orders_by_id or order_id in self._canceled:
+            raise AlpacaRequestError(f"order not cancelable: {order_id}", status_code=422)
+        self._canceled.add(order_id)
+
+    def get_balance_history(self) -> list[BalancePoint]:
+        self._guard_available()
+        return list(self._balance_history)

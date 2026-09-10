@@ -13,7 +13,8 @@ class ExecutionStatus(str, Enum):
     REVALIDATE = "revalidate"  # confirm-time state changed → re-show the proposal (D-4/D19)
     MARKET_CLOSED = "market_closed"  # can't submit while closed (D17)
     UNAVAILABLE = "unavailable"  # couldn't reach Alpaca (A-5)
-    NOTHING = "nothing"  # empty plan — nothing to do
+    NOTHING = "nothing"  # empty plan / no open orders — nothing to do
+    CANCELED = "canceled"  # open orders were canceled (D62)
 
 
 @dataclass(frozen=True)

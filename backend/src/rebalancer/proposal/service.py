@@ -82,6 +82,13 @@ class ProposalService:
             return self._finish(request_id, ProposalStatus.ERROR, RequestStatus.FAILED, message=parse.error)
 
         parsed = parse.parsed
+        if parsed.command == "cancel":  # D62: cancel pending orders, not a trade
+            open_orders = self._alpaca.get_open_orders()
+            message = "Cancel these open orders?" if open_orders else "You have no open orders to cancel."
+            return self._finish(
+                request_id, ProposalStatus.CANCEL, RequestStatus.RECEIVED,
+                message=message, open_orders=tuple(open_orders),
+            )
         if parsed.status is ParseStatus.NEEDS_CLARIFICATION:
             return self._finish(
                 request_id, ProposalStatus.CLARIFY, RequestStatus.RECEIVED,
@@ -196,11 +203,12 @@ class ProposalService:
         proposal_id = self._store.record_proposal(request_id, summary=proposal.restatement, legs=legs)
         self._store.record_allocation(proposal_id, proposal.allocation)
 
-    def _finish(self, request_id, status, request_status, *, proposal=None, message=None, problems=()):
+    def _finish(self, request_id, status, request_status, *, proposal=None, message=None, problems=(), open_orders=()):
         if self._store is not None and request_id is not None:
             self._store.set_request_status(request_id, request_status)
         return ProposalOutcome(
-            status=status, proposal=proposal, message=message, problems=tuple(problems), request_id=request_id
+            status=status, proposal=proposal, message=message, problems=tuple(problems),
+            request_id=request_id, open_orders=tuple(open_orders),
         )
 
 

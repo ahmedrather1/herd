@@ -3,11 +3,14 @@ import type { ConfirmResponse } from "./api";
 // Renders the execution report (E-2) or a confirm-time block (re-validate / market-closed).
 export function ResultView({ result }: { result: ConfirmResponse }) {
   const ok = result.status === "completed";
-  const blocked = result.status === "revalidate" || result.status === "market_closed";
+  const canceled = result.status === "canceled";
+  const blocked = result.status === "revalidate" || result.status === "market_closed" || result.status === "nothing";
+  const cls = ok || canceled ? "ok" : blocked ? "blocked" : "partial";
+  const heading = ok ? "Done" : canceled ? "Canceled" : blocked ? "Held — not placed" : "Stopped";
 
   return (
-    <section className={`panel result ${ok ? "ok" : blocked ? "blocked" : "partial"}`} role="status">
-      <h2>{ok ? "Done" : blocked ? "Held — not placed" : "Stopped"}</h2>
+    <section className={`panel result ${cls}`} role="status">
+      <h2>{heading}</h2>
       <p>{result.message}</p>
 
       {result.total > 0 && (

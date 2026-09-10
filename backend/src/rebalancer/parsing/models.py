@@ -94,6 +94,7 @@ class ParsedIntent(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     status: ParseStatus
+    command: str = "trade"  # "trade" (rebalance/buy/sell) or "cancel" pending orders (D62)
     confidence: float  # 0..1, the model's own confidence
     summary: str  # plain-language restatement shown at confirm (D4)
     intent: Intent | None = None  # present when status == PARSED

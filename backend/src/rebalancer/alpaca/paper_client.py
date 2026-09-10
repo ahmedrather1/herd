@@ -28,6 +28,7 @@ Invariants enforced here:
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from decimal import Decimal
 from functools import lru_cache
 from typing import TypeVar
@@ -37,8 +38,9 @@ from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockLatestTradeRequest
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide as SdkOrderSide
+from alpaca.trading.enums import QueryOrderStatus
 from alpaca.trading.enums import TimeInForce as SdkTimeInForce
-from alpaca.trading.requests import MarketOrderRequest
+from alpaca.trading.requests import GetOrdersRequest, GetPortfolioHistoryRequest, MarketOrderRequest
 
 try:  # transport layer under alpaca-py is `requests`; catch its failures as "unavailable"
     from requests.exceptions import RequestException
@@ -57,6 +59,7 @@ from .errors import (
 from .models import (
     Account,
     Asset,
+    BalancePoint,
     MarketClock,
     OrderRequest,
     OrderSide,
@@ -213,6 +216,28 @@ class PaperAlpacaClient(AlpacaClient):
     def get_order(self, order_id: str) -> SubmittedOrder:
         order = self._call(lambda: self._trading.get_order_by_id(order_id))
         return _to_submitted_order(order)
+
+    def get_open_orders(self) -> list[SubmittedOrder]:
+        request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+        orders = self._call(lambda: self._trading.get_orders(filter=request))
+        return [_to_submitted_order(o) for o in orders]
+
+    def cancel_order(self, order_id: str) -> None:
+        self._call(lambda: self._trading.cancel_order_by_id(order_id))
+
+    def get_balance_history(self) -> list[BalancePoint]:
+        request = GetPortfolioHistoryRequest(period="1M", timeframe="1D")
+        history = self._call(lambda: self._trading.get_portfolio_history(history_filter=request))
+        timestamps = getattr(history, "timestamp", None) or []
+        equities = getattr(history, "equity", None) or []
+        points: list[BalancePoint] = []
+        for ts, eq in zip(timestamps, equities):
+            if eq is None:
+                continue
+            points.append(
+                BalancePoint(as_of=datetime.fromtimestamp(int(ts), tz=UTC), equity=Decimal(str(eq)))
+            )
+        return points
 
 
 # --- SDK <-> domain mapping helpers ------------------------------------------

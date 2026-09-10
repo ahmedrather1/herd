@@ -23,17 +23,36 @@ export interface Allocation {
 }
 
 export interface ProposeResponse {
-  status: "proposal" | "clarify" | "refuse" | "unavailable" | "error";
+  status: "proposal" | "clarify" | "refuse" | "unavailable" | "error" | "cancel";
   request_id: string | null;
   conversation_id: string | null;
   message: string | null;
   problems: string[];
   restatement: string | null;
   orders: Order[];
+  open_orders: Order[];
   allocation: Allocation | null;
   applied_constraints: string[];
   market_open: boolean | null;
   market_warning: string | null;
+}
+
+export interface Holding {
+  symbol: string;
+  value: string;
+  pct: string;
+}
+
+export interface BalancePoint {
+  date: string;
+  equity: string;
+}
+
+export interface Portfolio {
+  equity: string;
+  cash: string;
+  holdings: Holding[];
+  balance: BalancePoint[];
 }
 
 export interface Submitted {
@@ -45,7 +64,7 @@ export interface Submitted {
 }
 
 export interface ConfirmResponse {
-  status: "completed" | "partial" | "revalidate" | "market_closed" | "unavailable" | "nothing";
+  status: "completed" | "partial" | "revalidate" | "market_closed" | "unavailable" | "nothing" | "canceled";
   message: string;
   completed: number;
   total: number;
@@ -81,6 +100,16 @@ export function propose(requestText: string, conversationId: string | null) {
 
 export function confirm(requestId: string) {
   return postJSON<ConfirmResponse>("/api/confirm", { request_id: requestId });
+}
+
+export function cancelOrders(requestId: string) {
+  return postJSON<ConfirmResponse>("/api/cancel", { request_id: requestId });
+}
+
+export async function getPortfolio(): Promise<Portfolio> {
+  const res = await fetch("/api/portfolio");
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  return res.json();
 }
 
 export async function listRequests(): Promise<RequestSummary[]> {

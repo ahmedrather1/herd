@@ -60,6 +60,15 @@ class Price(BaseModel):
     as_of: datetime | None = None
 
 
+class BalancePoint(BaseModel):
+    """One point on the account equity trendline (read-only history, C-3/D24 UI)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    as_of: datetime
+    equity: Decimal
+
+
 class MarketClock(BaseModel):
     """Market open/closed state for market-closed handling (D17, D-3)."""
 

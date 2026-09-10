@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from fakes.fake_alpaca import FakeAlpacaClient
 from fakes.fake_anthropic import FakeAnthropic, make_response
 
-from rebalancer.api.deps import get_execution_service, get_proposal_service, get_store
+from rebalancer.api.deps import get_alpaca, get_execution_service, get_proposal_service, get_store
 from rebalancer.execution import ExecutionService
 from rebalancer.main import app
 from rebalancer.parsing import IntentParser, ParseStatus, SymbolResolver
@@ -53,8 +53,14 @@ def client(tmp_path, monkeypatch):
     engine = make_engine(f"sqlite:///{tmp_path / 'api.db'}")
     create_db_and_tables(engine)
     store = AuditStore(engine)
-    alpaca = FakeAlpacaClient(equity="10000", buying_power="10000", cash="10000")
+    alpaca = FakeAlpacaClient(equity="10000", buying_power="10000", cash="1000")
     alpaca.set_unknown_asset("BONDS")
+    alpaca.set_position("AAPL", qty="90", price="100")  # $9,000 holding for the portfolio view
+    from datetime import UTC, datetime
+    alpaca.set_balance_history([
+        (datetime(2026, 9, 1, tzinfo=UTC), "9800"),
+        (datetime(2026, 9, 8, tzinfo=UTC), "10000"),
+    ])
     fake_llm = FakeAnthropic(
         _parse(operations=[_op("buy", "bonds", 10, "percent_portfolio")], summary="Put 10% into bonds."),
         _mapping(bonds=["BND"]),
@@ -68,9 +74,11 @@ def client(tmp_path, monkeypatch):
     execution_service = ExecutionService(alpaca, store)
 
     app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_alpaca] = lambda: alpaca
     app.dependency_overrides[get_proposal_service] = lambda: proposal_service
     app.dependency_overrides[get_execution_service] = lambda: execution_service
     with TestClient(app) as c:
+        c._alpaca = alpaca  # expose for tests that need to script open orders
         yield c
     app.dependency_overrides.clear()
 
@@ -119,6 +127,27 @@ def test_audit_history_endpoints(client):
 
 def test_get_unknown_request_is_404(client):
     assert client.get("/api/requests/nope").status_code == 404
+
+
+def test_portfolio_endpoint(client):
+    body = client.get("/api/portfolio").json()
+    assert body["equity"] == "10000"
+    symbols = {h["symbol"] for h in body["holdings"]}
+    assert "AAPL" in symbols and "CASH" in symbols
+    aapl = next(h for h in body["holdings"] if h["symbol"] == "AAPL")
+    assert aapl["pct"] == "90.00"
+    assert len(body["balance"]) == 2 and body["balance"][-1]["equity"] == "10000"
+
+
+def test_cancel_endpoint(client):
+    from decimal import Decimal
+
+    from rebalancer.alpaca import OrderRequest, OrderSide
+
+    client._alpaca.submit_order(OrderRequest(symbol="VTI", side=OrderSide.BUY, notional=Decimal("500")))
+    body = client.post("/api/cancel", json={"request_id": "x"}).json()
+    assert body["status"] == "canceled" and body["completed"] == 1
+    assert client._alpaca.get_open_orders() == []
 
 
 def test_propose_clarify(tmp_path, monkeypatch):

@@ -99,6 +99,35 @@ def test_empty_plan_is_nothing():
     assert report.status is ExecutionStatus.NOTHING
 
 
+# --- cancel open orders (D62) ------------------------------------------------
+
+
+def test_cancel_open_orders():
+    from rebalancer.alpaca import OrderRequest
+
+    alpaca = FakeAlpacaClient(buying_power="10000")
+    alpaca.submit_order(OrderRequest(symbol="VTI", side=OrderSide.BUY, notional=Decimal("500")))
+    alpaca.submit_order(OrderRequest(symbol="BND", side=OrderSide.BUY, notional=Decimal("400")))
+
+    report = ExecutionService(alpaca).cancel_open_orders()
+    assert report.status is ExecutionStatus.CANCELED
+    assert report.completed == 2 and report.total == 2
+    assert all(s.status == "canceled" for s in report.submitted)
+    assert alpaca.get_open_orders() == []  # all gone
+
+
+def test_cancel_with_no_open_orders_is_nothing():
+    report = ExecutionService(FakeAlpacaClient()).cancel_open_orders()
+    assert report.status is ExecutionStatus.NOTHING
+
+
+def test_cancel_unavailable():
+    alpaca = FakeAlpacaClient()
+    alpaca.set_unavailable(True)
+    report = ExecutionService(alpaca).cancel_open_orders()
+    assert report.status is ExecutionStatus.UNAVAILABLE
+
+
 # --- persistence (D20) -------------------------------------------------------
 
 

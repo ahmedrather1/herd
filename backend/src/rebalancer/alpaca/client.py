@@ -20,7 +20,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
-from .models import Account, Asset, MarketClock, OrderRequest, Position, Price, SubmittedOrder
+from .models import (
+    Account,
+    Asset,
+    BalancePoint,
+    MarketClock,
+    OrderRequest,
+    Position,
+    Price,
+    SubmittedOrder,
+)
 
 
 class AlpacaClient(ABC):
@@ -88,5 +97,30 @@ class AlpacaClient(ABC):
 
         Raises:
             AlpacaRequestError: if the order id is unknown.
+            AlpacaUnavailableError: if Alpaca can't be reached.
+        """
+
+    @abstractmethod
+    def get_open_orders(self) -> list[SubmittedOrder]:
+        """Return currently-open (unfilled) orders — the cancel targets (D62).
+
+        Raises:
+            AlpacaUnavailableError: if Alpaca can't be reached.
+        """
+
+    @abstractmethod
+    def cancel_order(self, order_id: str) -> None:
+        """Cancel a single open order (D62). No reversal of filled trades (D22).
+
+        Raises:
+            AlpacaRequestError: if the order is unknown or no longer cancelable.
+            AlpacaUnavailableError: if Alpaca can't be reached.
+        """
+
+    @abstractmethod
+    def get_balance_history(self) -> list[BalancePoint]:
+        """Return the account equity trendline (read-only history) for the UI (D24).
+
+        Raises:
             AlpacaUnavailableError: if Alpaca can't be reached.
         """

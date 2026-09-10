@@ -51,10 +51,29 @@ class ProposeResponse(BaseModel):
     problems: list[str] = []
     restatement: str | None = None
     orders: list[OrderSchema] = []
+    open_orders: list[OrderSchema] = []  # cancel targets when status == "cancel" (D62)
     allocation: AllocationSchema | None = None
     applied_constraints: list[str] = []
     market_open: bool | None = None
     market_warning: str | None = None
+
+
+class AllocationHolding(BaseModel):
+    symbol: str
+    value: str
+    pct: str
+
+
+class BalancePointSchema(BaseModel):
+    date: str
+    equity: str
+
+
+class PortfolioResponse(BaseModel):
+    equity: str
+    cash: str
+    holdings: list[AllocationHolding] = []
+    balance: list[BalancePointSchema] = []
 
 
 class ConfirmRequest(BaseModel):
@@ -106,6 +125,13 @@ def allocation_to_schema(report) -> AllocationSchema:
     )
 
 
+def submitted_to_schema(order) -> OrderSchema:
+    return OrderSchema(
+        symbol=order.symbol, side=order.side.value, qty=_s(order.qty), notional=_s(order.notional),
+        reason=order.id,
+    )
+
+
 def outcome_to_schema(outcome) -> ProposeResponse:
     p = outcome.proposal
     return ProposeResponse(
@@ -116,6 +142,7 @@ def outcome_to_schema(outcome) -> ProposeResponse:
         problems=list(outcome.problems),
         restatement=p.restatement if p else None,
         orders=[order_to_schema(o) for o in p.orders] if p else [],
+        open_orders=[submitted_to_schema(o) for o in outcome.open_orders],
         allocation=allocation_to_schema(p.allocation) if p else None,
         applied_constraints=list(p.applied_constraints) if p else [],
         market_open=p.market_open if p else None,

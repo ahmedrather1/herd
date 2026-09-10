@@ -65,6 +65,15 @@ class _StubClient(AlpacaClient):
             submitted_at=datetime(2026, 9, 2),
         )
 
+    def get_open_orders(self):
+        return []
+
+    def cancel_order(self, order_id):
+        return None
+
+    def get_balance_history(self):
+        return []
+
 
 def test_stub_implements_full_interface():
     c = _StubClient()
@@ -76,6 +85,8 @@ def test_stub_implements_full_interface():
     order = OrderRequest(symbol="AAPL", side=OrderSide.BUY, qty=Decimal("2"))
     assert c.submit_order(order).status == "accepted"
     assert c.get_order("o1").status == "filled"
+    assert c.get_open_orders() == [] and c.cancel_order("o1") is None
+    assert c.get_balance_history() == []
 
 
 def test_order_request_requires_exactly_one_amount():

@@ -16,6 +16,7 @@ from .errors import (
 from .models import (
     Account,
     Asset,
+    BalancePoint,
     MarketClock,
     OrderRequest,
     OrderSide,
@@ -36,6 +37,7 @@ __all__ = [
     "OrderRejectedError",
     "Account",
     "Asset",
+    "BalancePoint",
     "MarketClock",
     "OrderRequest",
     "OrderSide",

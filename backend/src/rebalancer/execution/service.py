@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from ..alpaca import AlpacaUnavailableError, OrderRejectedError
+from ..alpaca import AlpacaRequestError, AlpacaUnavailableError, OrderRejectedError
 from ..alpaca.client import AlpacaClient
 from ..planning import OrderValidator, Plan
 from ..store import AuditStore, RequestStatus
@@ -46,6 +46,38 @@ class ExecutionService:
                 ExecutionStatus.UNAVAILABLE,
                 "Can't reach Alpaca right now — nothing was submitted. Please try again.",
             )
+
+    def cancel_open_orders(self, *, request_id: str | None = None) -> ExecutionReport:
+        """Cancel all currently-open orders (D62). Re-fetches at cancel time (D19 spirit).
+
+        Filled orders can't be canceled and are reported as such — never reversed (D22).
+        """
+        try:
+            open_orders = self._alpaca.get_open_orders()
+        except AlpacaUnavailableError:
+            return ExecutionReport(
+                ExecutionStatus.UNAVAILABLE, "Can't reach Alpaca right now — nothing was canceled."
+            )
+        if not open_orders:
+            return ExecutionReport(ExecutionStatus.NOTHING, "There were no open orders to cancel.")
+
+        results: list[SubmittedResult] = []
+        canceled = 0
+        for order in open_orders:
+            try:
+                self._alpaca.cancel_order(order.id)
+            except AlpacaRequestError as exc:
+                results.append(SubmittedResult(order.symbol, order.side.value, "not_canceled", order.id, str(exc)))
+                self._record(request_id, order, "not_canceled", order_id=order.id, raw=str(exc))
+            else:
+                canceled += 1
+                results.append(SubmittedResult(order.symbol, order.side.value, "canceled", order.id))
+                self._record(request_id, order, "canceled", order_id=order.id)
+        self._set_status(request_id, RequestStatus.COMPLETED)
+        return ExecutionReport(
+            ExecutionStatus.CANCELED, f"Canceled {canceled} of {len(open_orders)} open orders.",
+            submitted=tuple(results), completed=canceled, total=len(open_orders),
+        )
 
     def _run(self, plan: Plan, request_id: str | None) -> ExecutionReport:
         # D-4: re-validate against fresh state.
@@ -118,4 +150,7 @@ class ExecutionService:
 
     def _set_status(self, request_id, status) -> None:
         if self._store is not None and request_id is not None:
-            self._store.set_request_status(request_id, status)
+            try:
+                self._store.set_request_status(request_id, status)
+            except KeyError:
+                pass  # request not persisted (e.g. a cancel with a stale id) — status is best-effort

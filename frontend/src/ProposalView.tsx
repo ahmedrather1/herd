@@ -5,12 +5,51 @@ import type { ProposeResponse } from "./api";
 export function ProposalView({
   outcome,
   onConfirm,
+  onCancel,
   busy,
 }: {
   outcome: ProposeResponse;
   onConfirm: () => void;
+  onCancel: () => void;
   busy: boolean;
 }) {
+  if (outcome.status === "cancel") {
+    const orders = outcome.open_orders;
+    return (
+      <section className="panel cancel" role="status">
+        <h2>Cancel pending orders?</h2>
+        <p>{outcome.message}</p>
+        {orders.length > 0 && (
+          <>
+            <table>
+              <thead>
+                <tr>
+                  <th>Side</th>
+                  <th>Symbol</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o, i) => (
+                  <tr key={i} className={o.side}>
+                    <td>{o.side}</td>
+                    <td>{o.symbol}</td>
+                    <td>{o.notional !== null ? `$${o.notional}` : `${o.qty} sh`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="confirm">
+              <button className="confirm-cancel" onClick={onCancel} disabled={busy}>
+                {busy ? "Canceling…" : "Cancel these orders"}
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+    );
+  }
+
   if (outcome.status === "clarify") {
     return (
       <section className="panel clarify" role="status">
