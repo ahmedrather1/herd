@@ -49,6 +49,9 @@ For each target:
   one tech-sector ETF, bonds → one aggregate-bond ETF). Only return multiple/individual
   names if the user clearly named specific companies.
 
+For a broad theme prefer the category's well-known ETF, not a same-named stock — e.g. "gold"
+→ a gold ETF like GLD or IAU, NOT the ticker GOLD (which is a mining company).
+
 Return concrete ticker symbols only (uppercase). Do not invent tickers. If you cannot map a
 target to a real tradable US symbol, return an empty list for it. Add a short `note`
 explaining each mapping (shown to the user at confirmation).

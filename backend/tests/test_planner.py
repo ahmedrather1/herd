@@ -63,6 +63,28 @@ def test_full_rebalance_liquidates_and_buys_targets():
     assert all(o.side is OrderSide.BUY for o in plan.orders[1:])  # buys after the sell
 
 
+def test_rebalance_fills_the_remaining_bucket():
+    # "50% VOO, 20% AAPL, the rest in gold" — gold has no explicit weight → gets the leftover 30%.
+    alpaca = FakeAlpacaClient(equity="100000")
+    plan = _plan(
+        alpaca,
+        [
+            _op("set_allocation", "stocks", 50, AmountBasis.TARGET_WEIGHT),
+            _op("set_allocation", "tech", 20, AmountBasis.TARGET_WEIGHT),
+            Operation(action="set_allocation", target="gold"),  # no amount → the remainder
+        ],
+        [
+            _map("stocks", "set_allocation", "VOO"),
+            _map("tech", "set_allocation", "AAPL"),
+            _map("gold", "set_allocation", "GLD"),
+        ],
+    )
+    orders = _by_symbol(plan)
+    assert orders["VOO"].notional == Decimal("50000")
+    assert orders["AAPL"].notional == Decimal("20000")
+    assert orders["GLD"].notional == Decimal("30000")  # the remaining 30% — no longer dropped
+
+
 def test_full_rebalance_already_on_target_is_noop():
     alpaca = FakeAlpacaClient(equity="10000")
     alpaca.set_position("VTI", qty="60", price="100")  # $6000 = 60%

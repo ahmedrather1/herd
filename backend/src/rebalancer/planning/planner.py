@@ -75,18 +75,31 @@ class Planner:
         notes: list[str] = []
         handled: set[int] = set()
 
-        rebalance_ops = [
-            op
-            for op in intent.operations
-            if op.action == "set_allocation"
-            and op.amount is not None
+        # A full rebalance = set_allocation ops whose target weights (with any "the rest"
+        # buckets filled to 100%) define the whole portfolio.
+        set_alloc = [op for op in intent.operations if op.action == "set_allocation"]
+        weighted = [
+            (op, op.amount.value)
+            for op in set_alloc
+            if op.amount is not None
             and op.amount.basis is AmountBasis.TARGET_WEIGHT
             and op.amount.value is not None
         ]
-        weight_sum = sum((op.amount.value for op in rebalance_ops), Decimal("0"))
-        if rebalance_ops and abs(weight_sum - _HUNDRED) <= _WEIGHT_TOLERANCE:
-            self._plan_full_rebalance(rebalance_ops, by_key, positions, equity, protected, sells, buys, notes)
-            handled = {id(op) for op in rebalance_ops}
+        _weighted_ids = {id(op) for op, _ in weighted}
+        remainder_ops = [op for op in set_alloc if id(op) not in _weighted_ids]
+        stated = sum((w for _, w in weighted), Decimal("0"))
+        leftover = _HUNDRED - stated
+        is_full = bool(weighted) and (
+            abs(stated - _HUNDRED) <= _WEIGHT_TOLERANCE or (remainder_ops and leftover > 0)
+        )
+        if is_full:
+            alloc = list(weighted)
+            if remainder_ops and leftover > 0:  # "put the rest in X" → split the leftover
+                per = leftover / len(remainder_ops)
+                alloc += [(op, per) for op in remainder_ops]
+                notes.append(f"Assigned the remaining {leftover}% to {', '.join(op.target for op in remainder_ops)}.")
+            self._plan_full_rebalance(alloc, by_key, positions, equity, protected, sells, buys, notes)
+            handled = {id(op) for op, _ in alloc}
 
         for op in intent.operations:
             if id(op) in handled:
@@ -105,15 +118,15 @@ class Planner:
 
     # --- whole-portfolio rebalance -------------------------------------------
 
-    def _plan_full_rebalance(self, rebalance_ops, by_key, positions, equity, protected, sells, buys, notes):
+    def _plan_full_rebalance(self, alloc, by_key, positions, equity, protected, sells, buys, notes):
         targets: dict[str, Decimal] = {}
-        for op in rebalance_ops:
+        for op, weight in alloc:
             mapping = by_key.get((op.target.strip().lower(), op.action))
             symbols = list(mapping.symbols) if mapping else []
             if not symbols:
                 notes.append(f"no symbols mapped for {op.target!r}; skipped")
                 continue
-            per_symbol = (op.amount.value / _HUNDRED) * equity / len(symbols)
+            per_symbol = (weight / _HUNDRED) * equity / len(symbols)
             for sym in symbols:
                 targets[sym.upper()] = targets.get(sym.upper(), Decimal("0")) + per_symbol
 

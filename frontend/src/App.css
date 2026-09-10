@@ -20,14 +20,18 @@
 
 * { box-sizing: border-box; }
 
+html { scrollbar-gutter: stable both-edges; }
 body {
   margin: 0;
   color: var(--text);
   font: 13.5px/1.55 var(--mono);
   background: radial-gradient(900px 420px at 82% -18%, rgba(52, 211, 153, 0.05), transparent 70%), var(--bg);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
 }
 
-.app { max-width: 880px; margin: 0 auto; padding: 26px 22px 60px; }
+.app { width: 100%; max-width: 880px; margin: 0 auto; padding: 26px 22px 60px; }
 
 header { display: flex; align-items: center; gap: 11px; margin-bottom: 22px; }
 header h1 { font-size: 0.98rem; margin: 0; font-weight: 600; color: var(--text); }
@@ -152,3 +156,16 @@ button.confirm-cancel:hover { background: var(--down); color: #150606; border-co
 .trend svg { width: 100%; height: 96px; display: block; margin-top: 10px; }
 .trend svg path.line { stroke-dasharray: 640; stroke-dashoffset: 640; animation: draw 1.4s ease 0.1s forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* --- spinner + working indicator --- */
+.spinner {
+  display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(52, 211, 153, 0.22);
+  border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -2px;
+}
+.spinner.on-solid { border-color: rgba(6, 19, 13, 0.28); border-top-color: #06130d; }
+.spinner.on-danger { border-color: rgba(242, 119, 122, 0.25); border-top-color: var(--down); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--dim); font-size: 0.85rem; margin: 14px 2px; }
+.thinking .label::after { content: ""; animation: ellipsis 1.4s steps(4, end) infinite; }
+@keyframes ellipsis { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }

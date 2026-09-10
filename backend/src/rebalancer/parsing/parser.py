@@ -71,6 +71,9 @@ When status is "parsed", fill `intent`:
   (said "of my portfolio", named a target weight, gave a dollar amount, or a share count);
   false for a bare percentage that does not say what it is a percentage of (e.g. just
   "10%" or "half"). This lets the app apply a safe default without guessing.
+- For a full target allocation where the user puts "the rest" / "remaining" / "whatever's
+  left" into an asset, use action "set_allocation" for every part, and it's fine to leave
+  that leftover asset's `amount` empty — the app fills its remaining percentage.
 - `constraints`: cash floors ("cash_floor"), exclusions ("exclude_asset", with the
   symbol/word in `target`), "only using new deposits" ("only_new_deposits"), else "other".
   `value` (a STRING number) and `raw_phrase` as applicable.

@@ -15,37 +15,41 @@ export function ProposalView({
 }) {
   if (outcome.status === "cancel") {
     const orders = outcome.open_orders;
+    if (orders.length === 0) {
+      return (
+        <section className="panel" role="status">
+          <h2>Nothing to cancel</h2>
+          <p>{outcome.message}</p>
+        </section>
+      );
+    }
     return (
       <section className="panel cancel" role="status">
         <h2>Cancel pending orders?</h2>
         <p>{outcome.message}</p>
-        {orders.length > 0 && (
-          <>
-            <table>
-              <thead>
-                <tr>
-                  <th>Side</th>
-                  <th>Symbol</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((o, i) => (
-                  <tr key={i} className={o.side}>
-                    <td>{o.side}</td>
-                    <td>{o.symbol}</td>
-                    <td>{o.notional !== null ? `$${o.notional}` : `${o.qty} sh`}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="confirm">
-              <button className="confirm-cancel" onClick={onCancel} disabled={busy}>
-                {busy ? "Canceling…" : "Cancel these orders"}
-              </button>
-            </div>
-          </>
-        )}
+        <table>
+          <thead>
+            <tr>
+              <th>Side</th>
+              <th>Symbol</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((o, i) => (
+              <tr key={i} className={o.side}>
+                <td>{o.side}</td>
+                <td>{o.symbol}</td>
+                <td>{o.notional !== null ? `$${o.notional}` : `${o.qty} sh`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="confirm">
+          <button className="confirm-cancel" onClick={onCancel} disabled={busy}>
+            {busy ? <span className="spinner on-danger" /> : "Cancel these orders"}
+          </button>
+        </div>
       </section>
     );
   }
@@ -140,7 +144,7 @@ export function ProposalView({
       )}
 
       <button className="confirm" onClick={onConfirm} disabled={busy}>
-        {busy ? "Placing…" : "Confirm & place orders"}
+        {busy ? <span className="spinner on-solid" /> : "Confirm & place orders"}
       </button>
     </section>
   );

@@ -15,11 +15,13 @@ export default function App() {
   const [outcome, setOutcome] = useState<ProposeResponse | null>(null);
   const [result, setResult] = useState<ConfirmResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState("Thinking");
   const [error, setError] = useState<string | null>(null);
 
   async function onPropose(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim()) return;
+    setBusyLabel("Reading your request");
     setBusy(true);
     setError(null);
     setResult(null);
@@ -37,6 +39,7 @@ export default function App() {
 
   async function onConfirm() {
     if (!outcome?.request_id) return;
+    setBusyLabel("Placing orders");
     setBusy(true);
     setError(null);
     try {
@@ -51,6 +54,7 @@ export default function App() {
 
   async function onCancel() {
     if (!outcome?.request_id) return;
+    setBusyLabel("Canceling orders");
     setBusy(true);
     setError(null);
     try {
@@ -91,11 +95,18 @@ export default function App() {
               rows={2}
             />
             <button type="submit" disabled={busy}>
-              {busy ? "…" : outcome || result ? "Send" : "Propose"}
+              {busy ? <span className="spinner on-solid" /> : outcome || result ? "Send" : "Propose"}
             </button>
           </form>
 
-          {!outcome && !result && <Dashboard />}
+          {busy && (
+            <div className="thinking" role="status">
+              <span className="spinner" />
+              <span className="label">{busyLabel}</span>
+            </div>
+          )}
+
+          {!busy && !outcome && !result && <Dashboard />}
           {error && (
             <p className="warning" role="alert">
               {error}
