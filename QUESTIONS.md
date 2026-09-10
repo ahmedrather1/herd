@@ -69,8 +69,13 @@ green — 160 fast tests). What remains needs a real decision from you:
 - ~~**F-1 — full audit record.**~~ ✅ Done (D60) — you chose full normalized tables. Intent
   operations + constraints, mapping, allocation snapshot, and validation reasons are now
   persisted and exposed at `GET /api/requests/{id}`.
-- **H-4 — Playwright e2e** — needs the frontend first (drives the real UI through
-  request → proposal → confirm → result against the paper account).
+- **H-4 — Playwright e2e** — ✅ Scaffolded (`backend/tests/e2e/test_smoke.py`), opt-in tier.
+  ⚠️ **Not run in the build environment** (needs the live stack + paper/Anthropic keys). Please
+  run it once locally to confirm: `RUN_E2E=1 uv run --group e2e pytest -m e2e` with backend +
+  frontend up.
 
-Everything above the line was built with a flagged default; everything here I'm leaving for
-you on purpose.
+## Status: every backlog ticket is now built
+
+Epics A–H are all implemented; the fast suite is 160 green (+7 eval, +1 e2e opt-in). What's
+left for you: (1) review the flagged defaults above, (2) react to the first-pass UI, (3) run
+the e2e once against your paper account. Nothing is blocked on me.

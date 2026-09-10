@@ -477,6 +477,13 @@ loop — request → proposal → confirm → result — against the Alpaca **pa
 - Hooks/fixtures exist to reach reproducible states (e.g. known starting positions) where feasible.
 - Runs in its own tier (not fast CI); documented how to run locally with paper creds.
 **Non-goals.** No live-account (non-paper) testing ever (D25). Not a substitute for unit/integration coverage.
+- **Scaffolded** (2026-09-09): `tests/e2e/test_smoke.py` — Playwright-Python (D38) happy-path
+  loop (request → proposal → confirm → result) via the app's real selectors. In a separate
+  `e2e` dependency group (kept out of the fast CI sync) and marked `e2e` (excluded by `addopts`).
+  Opt-in: `RUN_E2E=1 uv run --group e2e pytest -m e2e` with the stack + paper creds up. ⚠️ Not
+  executed in the build environment (no live stack/keys) — run locally to confirm. Reproducible
+  known-positions fixtures deferred (unsafe to auto-reset a shared paper account) — the smoke
+  request works from any starting state.
 
 ---
 

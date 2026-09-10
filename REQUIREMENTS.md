@@ -8,7 +8,7 @@ implicit in code or chat.
 
 - Project: natural-language portfolio rebalancer on the Alpaca API.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
-- Last updated: 2026-09-09 (Epic G frontend landed — Vite/React SPA, propose→confirm + history; D61. Prior: F-1/D60, B-4/D59, H-1 CI)
+- Last updated: 2026-09-09 (H-4 e2e scaffold landed — Playwright smoke, opt-in tier; no new decision. ALL BACKLOG TICKETS NOW BUILT. Prior: G/D61, F-1/D60)
 
 ---
 
